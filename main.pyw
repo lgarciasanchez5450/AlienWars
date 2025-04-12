@@ -17,6 +17,7 @@ from Playership import Playership
 player = Playership(pygame.Vector2(0,0),0,100000000000000000)
 entities.append(player)
 half_screen_size = pygame.Vector2(window.size)/2
+dt = 0
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -24,11 +25,12 @@ while True:
     
     map = build_map(entities)
     for e in entities:
-        e.update(map)
+        e.update(map, dt)
     camera_pos = player.pos
     screen.blit(bg_image,-camera_pos+ half_screen_size)
     for e in entities:
         surf = e.get_surf()
         screen.blit(surf,e.pos-camera_pos+half_screen_size)
     window.flip()
+    dt = pygame.time.Clock().tick(60)
 
