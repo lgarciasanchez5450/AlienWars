@@ -44,7 +44,7 @@ while True:
     map = build_map(entities)
     # update all entities
     for e in entities:
-        e.update(map, dt)
+        e.update(map, dt, camera_pos)
 
     for e in entities:
         if e.dirty:

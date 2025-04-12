@@ -25,7 +25,7 @@ class Entity:
         self._surf = NULL_SURF
         self.dirty = True
     
-    def update(self,map:MapType,dt:float): ...
+    def update(self,map:MapType,dt:float,camera_pos): ...
     
     def regenerate_physics(self):
         self.surf = pygame.transform.rotate(self._surf,self.rot*RAD_TO_DEG)
@@ -51,7 +51,7 @@ class Bullet(Entity):
     def regenerate_physics(self):
         super().regenerate_physics()
 
-    def update(self,map:MapType,dt:float):
+    def update(self,map:MapType,dt:float,camera_pos):
         self.pos += self.vel * dt
         self.t -= dt
         if self.t < 0: self.dead = True
