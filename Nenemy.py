@@ -2,16 +2,23 @@ from ChunkManager import *
 import random
 img= pygame.image.load('./Images/nship.png')
 import physics
+
+def dprint(*args):
+    import sys
+    sys.stdout.write(' '.join([str(a) for a in args])+'\n')
+    sys.stdout.flush()
 class Goal:
     WANDER = 0
     RETREAT = 1
     PROTECT = 2
     ATTACK = 3
-    def update(self,map,game): ...
-
-class Wander(Goal):
     def __init__(self,entity:Spaceship):
         self.entity = entity
+    def update(self,map,game): ...
+    def reload(self,map,game:"Game"): ...
+
+
+class Wander(Goal):
 
     def reload(self,map,game:"Game"): 
         big_rect = pygame.Rect(0,0,300,300)
@@ -32,10 +39,32 @@ class Wander(Goal):
         d_rot = (target_rot - self.entity.rot) %TWO_PI
         if d_rot > TWO_PI:
             d_rot -= TWO_PI
+        if abs(d_rot) > 0.1:
+            self.entity.rot += d_rot * game.dt
+            self.entity.dirty = True
 
+class AttackGoal(Goal):
+    def __init__(self, entity,target:Spaceship):
+        super().__init__(entity)
+        self.target = target
 
+    def reload(self,map,game:"Game"): 
+        big_rect = pygame.Rect(0,0,300,300)
+        big_rect.center = self.entity.pos
+        self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity]
         
+    def update(self, map, game:"Game"):
+        dpos = self.target.pos - self.entity.pos
+        trot = glm.atan(-dpos.y,dpos.x)
+        d_rot = (trot - self.entity.rot) % TWO_PI
+        if d_rot > pi:
+            d_rot -= TWO_PI
+        if abs(d_rot) > 0.05:
+            self.entity.rot += max(-1,min(d_rot,1)) * game.dt * 2
+            self.entity.dirty = True
+    
 class Nenemy(Spaceship):
+    team = 'B'
     every = 60
     _uid = 0
     def __init__(self, pos, rot,player:Spaceship):
@@ -43,23 +72,32 @@ class Nenemy(Spaceship):
         self.player = player
         self.every = 1
         self.id = Nenemy._uid
-        self.goal = Wander(self)
+        self._goal = None
+        self.goal = Goal.WANDER
         Nenemy._uid += 1
 
     def update(self, map, dt, input:Input,game:"Game"):
         if game.frame % Nenemy.every == self.id:
             self.higher_order_processing(map,dt,input,game)
-        else:
-            self.goal.update
-        dpos = self.player.pos - self.pos
-        trot = glm.atan(-dpos.y,dpos.x)
-        drot = trot - self.rot
-        if drot:
-            self.rot += max(-1,min(drot,1)) * dt * 2
-            self.dirty = True
+        elif self._goal:
+            self._goal.update(map,game)
+      
         super().update(map,dt,input,game)
 
     def higher_order_processing(self,map:MapType,dt:float,input:Input,game:"Game"):
-        print('higher order processing')
+        if self.goal is None: 
+            self.goal = Goal.WANDER
+            self._goal = Wander(self)
+            dprint('Goal Changed to Attack')
 
-    
+        elif self.goal is Goal.WANDER:
+            big_rect = pygame.Rect(0,0,300,300)
+            big_rect.center = self.pos
+            for ent in physics.get_colliding(big_rect,map):
+                if ent is self: continue
+                if isinstance(ent,Spaceship):
+                    if ent.team is not self.team:
+                        dprint('Goal Changed to Attack')
+                        self.goal = Goal.ATTACK
+                        self._goal = AttackGoal(self,ent)
+        self._goal.reload(map,game)

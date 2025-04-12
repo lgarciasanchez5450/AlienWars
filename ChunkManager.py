@@ -77,6 +77,7 @@ class Attack:
     def makeBullet(self) -> Bullet: ...
 
 class Spaceship(Entity):
+    team:str = 'A'
     rot:float
     hp:float
     hp_max:float
@@ -88,7 +89,6 @@ class Spaceship(Entity):
         self.hp = hp
         self._surf = img
         self.rect = self._surf.get_rect()
-
 
     def onCollide(self, other):
         if isinstance(other,Bullet):
