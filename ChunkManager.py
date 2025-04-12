@@ -87,6 +87,7 @@ class Spaceship(Entity):
         super().__init__(pos,rot)
         self.hp = hp
         self._surf = img
+        self.rect = self._surf.get_rect()
 
 
     def onCollide(self, other):
