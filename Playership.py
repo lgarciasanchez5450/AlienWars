@@ -14,7 +14,7 @@ class Playership(ChunkManager.Spaceship):
         _surf = img.convert_alpha()
         super().__init__(pos, rot, hp,_surf)
 
-    def update(self,map:ChunkManager, dt, input:Input):
+    def update(self,map:ChunkManager.MapType, dt, input:Input,game:"ChunkManager.Game"):
         keys = pygame.key.get_pressed()
         force = glm.vec2(
              (keys[pygame.K_w] - keys[pygame.K_s]) * 1000,
