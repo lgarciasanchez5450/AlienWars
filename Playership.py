@@ -41,8 +41,9 @@ class Playership(ChunkManager.Spaceship):
 
         # get 
         difference = input.toWorldCoords(mouse_pos) - self.pos 
+        print(input.toWorldCoords(mouse_pos))
 
-        self.rot = glm.atan(difference.y, difference.x)
+        self.rot = glm.atan(-difference.y, difference.x)
 
         self.dirty = True
 
