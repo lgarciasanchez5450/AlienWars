@@ -3,6 +3,7 @@ import ChunkManager
 from ChunkManager import Bullet
 import pygame
 from Input import Input
+from Attacks import BasicEnemyAttack
 import math
 img=  pygame.image.load('./Images/ship.png')
 
@@ -14,6 +15,7 @@ class Playership(ChunkManager.Spaceship):
     def __init__(self, pos, rot, hp):
         _surf = img.convert_alpha()
         super().__init__(pos, rot, hp,_surf)
+        self.atk_1 = BasicEnemyAttack()
 
     def update(self,map:ChunkManager.MapType, dt, input:Input,game:"ChunkManager.Game"):
         keys = pygame.key.get_pressed()
@@ -28,20 +30,12 @@ class Playership(ChunkManager.Spaceship):
         self.vel = expDecay(self.vel,glm.vec2(),4,dt)
 
         if keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0] == True:
-            game.entities.append(Bullet(glm.vec2(self.pos)+30*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))  
+            game.entities.append(self.atk_1.makeBullet(glm.vec2(self.pos)+30*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))
 
         # changing rotation based on cursor positioning 
         mouse_pos = pygame.mouse.get_pos()
         difference = input.toWorldCoords(mouse_pos) - self.pos 
-        print(input.toWorldCoords(mouse_pos))
+        # print(input.toWorldCoords(mouse_pos))
         self.rot = glm.atan(-difference.y, difference.x)
         self.dirty = True
-
         super().update(map, dt, input, game)
-
-
-
-
-
-        
-

@@ -61,7 +61,7 @@ class Game:
                         # self.entities.append(Bullet(glm.vec2(player.pos)+30*glm.vec2(glm.cos(-player.rot),glm.sin(-player.rot)),player.vel,player.rot))    
                     if event.key == pygame.K_q:
                         self.entities.append(
-                            enemyFactory('basic',self.player.pos+glm.circularRand(500),glm.linearRand(0,2*pi))
+                            enemyFactory('basic',self.player.pos+glm.circularRand(200),glm.linearRand(0,2*pi))
                         )
 
             map = build_map(self.entities)
