@@ -18,7 +18,6 @@ class Goal:
     def update(self,map,game): ...
     def reload(self,map,game:"Game"): ...
 
-
 class Wander(Goal):
 
     def reload(self,map,game:"Game"): 
@@ -68,7 +67,6 @@ class AttackGoal(Goal):
             pos = glm.vec2(ent.pos)+30*glm.vec2(glm.cos(-ent.rot),glm.sin(-ent.rot))
             game.entities.append(ent.atk_1.makeBullet(pos,ent.vel,ent.rot))
             ent.atk_1.resetAttackTime(game.time)
-
 
 class RetreatGoal(Goal):
     def __init__(self, entity):
@@ -141,7 +139,6 @@ class Nenemy(Spaceship):
                         self._goal = AttackGoal(self,ent)
         self._goal.reload(map,game)
 
-
 type enemytype = typing.Literal['basic','mothership']
 
 def enemyFactory(type:enemytype,pos,rot):
@@ -152,4 +149,3 @@ def enemyFactory(type:enemytype,pos,rot):
     elif type== 'mothership':
         emy = Nenemy(pos,rot)
         raise NotImplementedError('lol not made yet :)')
-    

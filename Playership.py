@@ -16,6 +16,7 @@ class Playership(ChunkManager.Spaceship):
         _surf = img.convert_alpha()
         super().__init__(pos, rot, hp,_surf)
         self.atk_1 = BasicEnemyAttack()
+        self.atk_1.reload_time = 0.5
 
     def update(self,map:ChunkManager.MapType, dt, input:Input,game:"ChunkManager.Game"):
         keys = pygame.key.get_pressed()
@@ -30,8 +31,9 @@ class Playership(ChunkManager.Spaceship):
         self.vel = expDecay(self.vel,glm.vec2(),4,dt)
 
         if keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0] == True:
-            game.entities.append(self.atk_1.makeBullet(glm.vec2(self.pos)+30*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))
-
+            if self.atk_1.next_atk_time < game.time:
+                game.entities.append(self.atk_1.makeBullet(glm.vec2(self.pos)+30*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))
+                self.atk_1.resetAttackTime(game.time)
         # changing rotation based on cursor positioning 
         mouse_pos = pygame.mouse.get_pos()
         difference = input.toWorldCoords(mouse_pos) - self.pos 
