@@ -37,6 +37,8 @@ class Playership(ChunkManager.Spaceship):
         self.rot = glm.atan(-difference.y, difference.x)
         self.dirty = True
 
+        super().update(map, dt, input, game)
+
 
 
 
