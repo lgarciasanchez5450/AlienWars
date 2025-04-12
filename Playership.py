@@ -1,5 +1,6 @@
 from pyglm import glm
 import ChunkManager
+from ChunkManager import Bullet
 import pygame
 from Input import Input
 import math
@@ -16,35 +17,24 @@ class Playership(ChunkManager.Spaceship):
 
     def update(self,map:ChunkManager.MapType, dt, input:Input,game:"ChunkManager.Game"):
         keys = pygame.key.get_pressed()
+
+        # updating forwards and backwards + velocity movement
         force = glm.vec2(
-             (keys[pygame.K_w] - keys[pygame.K_s]) * 1000,
+             (keys[pygame.K_w]) * 1000,
              0
         )
-
         self.vel += glm.rotate(force,-self.rot) * dt * 2
-        # drot = keys[pygame.K_a] - keys[pygame.K_d]
-        # if drot:
-        #     self.dirty = True
-        #     self.rot += drot * dt
         self.pos += self.vel * dt
         self.vel = expDecay(self.vel,glm.vec2(),4,dt)
 
-        # if keys[pygame.K_w]:
-        #     self.pos.y -= 300 * dt
-        # if keys[pygame.K_s]:
-        #     self.pos.y += 300 * dt
-        # if keys[pygame.K_a]:
-        #     self.pos.x -= 300 * dt
-        # if keys[pygame.K_d]:
-        #     self.pos.x += 300 * dt
-        mouse_pos = pygame.mouse.get_pos()
+        if keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0] == True:
+            game.entities.append(Bullet(glm.vec2(self.pos)+30*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))  
 
-        # get 
+        # changing rotation based on cursor positioning 
+        mouse_pos = pygame.mouse.get_pos()
         difference = input.toWorldCoords(mouse_pos) - self.pos 
         print(input.toWorldCoords(mouse_pos))
-
         self.rot = glm.atan(-difference.y, difference.x)
-
         self.dirty = True
 
 
