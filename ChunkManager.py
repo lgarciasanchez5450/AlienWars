@@ -45,7 +45,7 @@ class Entity:
 class Bullet(Entity):
     dir:glm.vec2
     dmg = 1
-    def __init__(self,pos:glm.vec2,bvel:glm.vec2,rot:float):
+    def __init__(self,pos:glm.vec2,rot:float):
         super().__init__(pos,rot)
         self.dir = glm.vec2(math.cos(rot),math.sin(-rot))
         self._surf = pygame.Surface((10,5))
@@ -53,7 +53,7 @@ class Bullet(Entity):
         self._surf.fill('red')
         self._surf.set_at((0,0),'black')
         self.t = 5
-        self.vel = bvel + self.dir *  200
+        self.vel = self.dir *  200
         self.rect = pygame.Rect()
     
     def regenerate_physics(self):
@@ -74,7 +74,9 @@ class Attack:
     reload_time:float
     next_atk_time:float
     bullet_power:float
-    def makeBullet(self) -> Bullet: ...
+    def resetAttackTime(self,cur_time:float):
+        self.next_atk_time = cur_time + self.reload_time
+    def makeBullet(self,pos,bvel,rot) -> Bullet: ...
 
 class Spaceship(Entity):
     team:str = 'A'
@@ -87,6 +89,7 @@ class Spaceship(Entity):
     def __init__(self,pos,rot,hp,img:pygame.Surface):
         super().__init__(pos,rot)
         self.hp = hp
+        self.hp_max = hp
         self._surf = img
         self.rect = self._surf.get_rect()
 

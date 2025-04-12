@@ -5,7 +5,7 @@ import pygame
 from ChunkManager import * 
 from Playership import Playership
 import physics
-from Nenemy import Nenemy
+from Nenemy import enemyFactory
 from Input import Input
 import gui
 if not __debug__:
@@ -51,6 +51,7 @@ class Game:
     def run(self):
         while True:
             t_start = time.perf_counter()
+            self.time = time.perf_counter()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit(0)
@@ -60,7 +61,7 @@ class Game:
                         # self.entities.append(Bullet(glm.vec2(player.pos)+30*glm.vec2(glm.cos(-player.rot),glm.sin(-player.rot)),player.vel,player.rot))    
                     if event.key == pygame.K_q:
                         self.entities.append(
-                            Nenemy(self.player.pos+glm.circularRand(100),glm.linearRand(0,2*pi),self.player)
+                            enemyFactory('basic',self.player.pos+glm.circularRand(500),glm.linearRand(0,2*pi))
                         )
 
             map = build_map(self.entities)

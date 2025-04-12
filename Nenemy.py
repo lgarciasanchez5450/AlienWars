@@ -1,4 +1,5 @@
 from ChunkManager import *
+from Attacks import *
 import random
 img= pygame.image.load('./Images/nship.png')
 import physics
@@ -23,7 +24,7 @@ class Wander(Goal):
     def reload(self,map,game:"Game"): 
         big_rect = pygame.Rect(0,0,300,300)
         big_rect.center = self.entity.pos
-        self.around = [e for e in physics.get_colliding(big_rect) if e is not self.entity]
+        self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity]
         self.target = glm.vec2(
             random.random()*MAP.w,
             random.random()*MAP.h
@@ -37,7 +38,7 @@ class Wander(Goal):
         dif = self.target - self.entity.pos
         target_rot = glm.atan(-dif.y,dif.x)
         d_rot = (target_rot - self.entity.rot) %TWO_PI
-        if d_rot > TWO_PI:
+        if d_rot > pi:
             d_rot -= TWO_PI
         if abs(d_rot) > 0.1:
             self.entity.rot += d_rot * game.dt
@@ -54,24 +55,58 @@ class AttackGoal(Goal):
         self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity]
         
     def update(self, map, game:"Game"):
-        dpos = self.target.pos - self.entity.pos
+        ent = self.entity
+        dpos = self.target.pos - ent.pos
         trot = glm.atan(-dpos.y,dpos.x)
         d_rot = (trot - self.entity.rot) % TWO_PI
         if d_rot > pi:
             d_rot -= TWO_PI
         if abs(d_rot) > 0.05:
-            self.entity.rot += max(-1,min(d_rot,1)) * game.dt * 2
-            self.entity.dirty = True
-    
+            ent.rot += max(-1,min(d_rot,1)) * game.dt * 2
+            ent.dirty = True
+        if ent.atk_1.next_atk_time < game.time:
+            pos = glm.vec2(ent.pos)+30*glm.vec2(glm.cos(-ent.rot),glm.sin(-ent.rot))
+            game.entities.append(ent.atk_1.makeBullet(pos,ent.vel,ent.rot))
+            ent.atk_1.resetAttackTime(game.time)
+
+
+class RetreatGoal(Goal):
+    def __init__(self, entity):
+        super().__init__(entity)
+
+    def reload(self, map, game):
+        big_rect = pygame.Rect(0,0,300,300)
+        big_rect.center = self.entity.pos
+        self.flee_from:list[Spaceship] = []
+        for e in physics.get_colliding(big_rect,map):
+            if isinstance(e,Spaceship) and e.team != self.entity.team:
+                self.flee_from.append(e)
+
+    def update(self, map, game):
+        ent = self.entity
+        sum_pos = glm.vec2()
+        for ent in self.flee_from:
+            sum_pos += ent.pos
+        sum_pos /= len(self.flee_from)
+
+        dpos = sum_pos - ent.pos
+        trot = glm.atan(-dpos.y,-dpos.x)
+        d_rot = (trot - self.entity.rot) % TWO_PI
+        if d_rot > pi:
+            d_rot -= TWO_PI
+        if abs(d_rot) > 0.05:
+            ent.rot += max(-1,min(d_rot,1)) * game.dt * 2
+            ent.dirty = True
+
 class Nenemy(Spaceship):
     team = 'B'
     every = 60
     _uid = 0
-    def __init__(self, pos, rot,player:Spaceship):
+    def __init__(self, pos, rot):
         super().__init__(pos, rot, 3,img.convert_alpha())
-        self.player = player
         self.every = 1
         self.id = Nenemy._uid
+        self
         self._goal = None
         self.goal = Goal.WANDER
         Nenemy._uid += 1
@@ -85,11 +120,15 @@ class Nenemy(Spaceship):
         super().update(map,dt,input,game)
 
     def higher_order_processing(self,map:MapType,dt:float,input:Input,game:"Game"):
-        if self.goal is None: 
+        dprint('hop')
+        if self._goal is None: 
             self.goal = Goal.WANDER
             self._goal = Wander(self)
-            dprint('Goal Changed to Attack')
-
+            dprint('Goal Changed to Wander')
+        if self.hp/self.hp_max < 0.2 and self.goal != Goal.RETREAT:
+            self.goal = Goal.RETREAT
+            self._goal = RetreatGoal(self)
+            dprint('changin to retreat goal')
         elif self.goal is Goal.WANDER:
             big_rect = pygame.Rect(0,0,300,300)
             big_rect.center = self.pos
@@ -101,3 +140,16 @@ class Nenemy(Spaceship):
                         self.goal = Goal.ATTACK
                         self._goal = AttackGoal(self,ent)
         self._goal.reload(map,game)
+
+
+type enemytype = typing.Literal['basic','mothership']
+
+def enemyFactory(type:enemytype,pos,rot):
+    if type == 'basic':
+        emy = Nenemy(pos,rot)
+        emy.atk_1 = BasicEnemyAttack()
+        return emy
+    elif type== 'mothership':
+        emy = Nenemy(pos,rot)
+        raise NotImplementedError('lol not made yet :)')
+    
