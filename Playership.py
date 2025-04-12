@@ -1,6 +1,7 @@
 from pyglm import glm
 import ChunkManager
 import pygame
+from Input import Input
 import math
 img=  pygame.image.load('./Images/ship.png')
 
@@ -13,7 +14,7 @@ class Playership(ChunkManager.Spaceship):
         _surf = img.convert_alpha()
         super().__init__(pos, rot, hp,_surf)
 
-    def update(self,map:ChunkManager, dt, camera_pos):
+    def update(self,map:ChunkManager, dt, input:Input):
         keys = pygame.key.get_pressed()
         force = glm.vec2(
              (keys[pygame.K_w] - keys[pygame.K_s]) * 1000,
@@ -39,7 +40,7 @@ class Playership(ChunkManager.Spaceship):
         mouse_pos = pygame.mouse.get_pos()
 
         # get 
-        difference = mouse_pos - camera_pos
+        difference = input.toWorldCoords(mouse_pos) - self.pos 
 
         self.rot = glm.atan(difference.y, difference.x)
 

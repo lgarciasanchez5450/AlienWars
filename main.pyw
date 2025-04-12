@@ -23,9 +23,13 @@ entities.append(player)
 half_screen_size = glm.vec2(window.size)/2
 from Nenemy import Nenemy
 import physics
+from Input import Input
 import random
 dt = 0
 clock = pygame.time.Clock()
+inp = Input()
+inp.screen_size = glm.vec2(window.size)
+inp.camera_pos = glm.vec2()
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -39,12 +43,10 @@ while True:
                     Nenemy(player.pos+glm.circularRand(50),glm.linearRand(0,2*pi),player)
                 )
 
-
-     
     map = build_map(entities)
     # update all entities
     for e in entities:
-        e.update(map, dt, camera_pos)
+        e.update(map, dt, inp)
 
     for e in entities:
         if e.dirty:
@@ -54,14 +56,14 @@ while True:
     physics.do_physics(entities,map)
     entities = list(filter(lambda x:not x.dead, entities))
 
-    camera_pos = player.pos
-    screen.blit(bg_image,-camera_pos+half_screen_size-glm.vec2(bg_image.get_size())//2)
+    inp.camera_pos = player.pos
+    screen.blit(bg_image,-inp.camera_pos+half_screen_size-glm.vec2(bg_image.get_size())//2)
 
     for e in entities:
         surf = e.surf
         # if type(e) is Bullet:
         #     print(e.pos-camera_pos+half_screen_size-glm.vec2(surf.get_size())//2,surf.get_size())
-        screen.blit(surf,e.pos-camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
+        screen.blit(surf,e.pos-inp.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
         
     window.flip()
     dt = clock.tick(FPS) / 1000
