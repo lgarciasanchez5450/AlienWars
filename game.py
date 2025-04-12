@@ -56,7 +56,7 @@ class Game:
                         # self.entities.append(Bullet(glm.vec2(player.pos)+30*glm.vec2(glm.cos(-player.rot),glm.sin(-player.rot)),player.vel,player.rot))    
                     if event.key == pygame.K_q:
                         self.entities.append(
-                            Nenemy(player.pos+glm.circularRand(100),glm.linearRand(0,2*pi),player)
+                            Nenemy(self.player.pos+glm.circularRand(100),glm.linearRand(0,2*pi),self.player)
                         )
 
             map = build_map(self.entities)
@@ -77,8 +77,6 @@ class Game:
 
             for e in self.entities:
                 surf = e.surf
-                # if type(e) is Bullet:
-                #     print(e.pos-camera_pos+half_screen_size-glm.vec2(surf.get_size())//2,surf.get_size())
                 screen.blit(surf,e.pos-inp.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
             t_end = time.perf_counter()
 

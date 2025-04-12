@@ -8,6 +8,9 @@ if typing.TYPE_CHECKING:
     from game import Game
 RAD_TO_DEG = 180 / pi
 DEG_TO_RAD = pi / 180
+TWO_PI = 2*pi
+
+MAP = pygame.Rect(0,0,10_000,10_000)
 
 type MapType = dict[tuple[int,int],list['Entity']]
 NULL_SURF = pygame.Surface((0,0))
@@ -28,7 +31,8 @@ class Entity:
         self._surf = NULL_SURF
         self.dirty = True
     
-    def update(self,map:MapType,dt:float,input:Input,game:"Game"): ...
+    def update(self,map:MapType,dt:float,input:Input,game:"Game"):
+        self.rect.center = self.pos
     
     def regenerate_physics(self):
         self.surf = pygame.transform.rotate(self._surf,self.rot*RAD_TO_DEG)
@@ -58,6 +62,7 @@ class Bullet(Entity):
         self.pos += self.vel * dt
         self.t -= dt
         if self.t < 0: self.dead = True
+        self.rect.center = self.pos
 
     def onCollide(self, other):
         if isinstance(other,Spaceship):
@@ -81,6 +86,7 @@ class Spaceship(Entity):
         super().__init__(pos,rot)
         self.hp = hp
         self._surf = img
+
 
     def onCollide(self, other):
         if isinstance(other,Bullet):

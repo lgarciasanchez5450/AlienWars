@@ -152,7 +152,7 @@ class Region(DrawBase):
 def findAllFiles(ending:str,addedPath:str = ''):
   '''Find all files with a specific extension like .png or .txt'''
   from os import walk
-  for _root, _dirs, files in walk('./'+addedPath): 
+  for _root, _dirsfiles in walk('./'+addedPath): 
     for file in files:
       if file.endswith(ending):
         yield str(file)
@@ -184,4 +184,3 @@ class FontRule:
 #     points.append((center[0] + cos(a)*radius,center[1]-sin(a)*radius))
 #   gfxdraw.aapolygon(source,points,color)
 #   gfxdraw.filled_polygon(source,points,color)
-
