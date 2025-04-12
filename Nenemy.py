@@ -32,14 +32,14 @@ class Wander(Goal):
         d_rot = (target_rot - self.entity.rot) %TWO_PI
         if d_rot > TWO_PI:
             d_rot -= TWO_PI
-        
+
 
         
 class Nenemy(Spaceship):
     every = 60
     _uid = 0
     def __init__(self, pos, rot,player:Spaceship):
-        super().__init__(pos, rot, 3,img)
+        super().__init__(pos, rot, 3,img.convert_alpha())
         self.player = player
         self.every = 1
         self.id = Nenemy._uid
@@ -60,6 +60,6 @@ class Nenemy(Spaceship):
         super().update(map,dt,input,game)
 
     def higher_order_processing(self,map:MapType,dt:float,input:Input,game:"Game"):
-        pass
+        print('higher order processing')
 
     

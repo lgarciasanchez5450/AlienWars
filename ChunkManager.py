@@ -37,6 +37,7 @@ class Entity:
     def regenerate_physics(self):
         self.surf = pygame.transform.rotate(self._surf,self.rot*RAD_TO_DEG)
         self.rect = self.surf.get_rect()
+        self.rect.center = self.pos
         self.mask = pygame.mask.from_surface(self.surf)
     
     def onCollide(self,other:"Entity"): ...
@@ -53,7 +54,7 @@ class Bullet(Entity):
         self._surf.set_at((0,0),'black')
         self.t = 5
         self.vel = bvel + self.dir *  200
-
+        self.rect = pygame.Rect()
     
     def regenerate_physics(self):
         super().regenerate_physics()

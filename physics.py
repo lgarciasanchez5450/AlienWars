@@ -15,12 +15,10 @@ def do_physics(entities:list[Entity],map:MapType):
         _r = entity.rect
         _cr = entity.rect.colliderect
         _m = entity.mask
-        _r.center = entity.pos
         for s_cpos in surrounding:
             if ents:=map.get(s_cpos):
                 for other in ents:
                     if other is entity: continue
-                    other.rect.center = other.pos
                     if _cr(other.rect):
                         if _m.overlap(other.mask,(other.rect.left-_r.left,other.rect.top-_r.top)):
                             entity.onCollide(other)

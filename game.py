@@ -8,6 +8,10 @@ import physics
 from Nenemy import Nenemy
 from Input import Input
 import gui
+if not __debug__:
+    import builtins
+    def _(*args,**kwargs):...
+    builtins.print = _
 
 window = pygame.Window('GAME')
 screen = window.get_surface()
@@ -15,7 +19,7 @@ screen = window.get_surface()
 FPS = 70
 
 bg_image = pygame.image.load('./Images/T8g30s.png')
-bg_image = pygame.transform.scale_by(bg_image,5)
+bg_image = pygame.transform.scale_by(bg_image,5).convert()
 
 
 
