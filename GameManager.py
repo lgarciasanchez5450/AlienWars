@@ -82,10 +82,12 @@ class GameManager:
             
             if self.player_lvl == 5:
                 self.spawnMothership()
-                
+                self.game.player.atk_1 = EightShotPassive()
+                self.game.player.hp = self.game.player.hp_max
+                self.level_up_sfx.play()
 
     def spawnMothership(self):
-        self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx,MAP.top+500),0)
+        self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx, random.random() * MAP.width), 0)
         self.game.spawnEntity(self.mothership)
         self.just_spawned = True
         mothership_sound = pygame.mixer.Sound('./music/sfx/boss_spawn.mp3')
@@ -94,9 +96,7 @@ class GameManager:
 
 
     def post_update(self,map:MapType):
-        if self.mothership is not None and self.mothership.dead:
-            self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx, random.random() * MAP.width),0)
-            self.game.spawnEntity(self.mothership)
+        pass
 
     def ui_draw(self):
         """ I need help fixing the progress bar, sorry """
