@@ -13,6 +13,7 @@ class GameManager:
         self.window = window
         self.asteroid_time_counter = 2
         self.screen = self.window.get_surface()
+
         global chicken_jockey_img
         chicken_jockey_img =chicken_jockey_img.convert()
         chicken_jockey_img.set_colorkey((255,255,255))
@@ -82,13 +83,20 @@ class GameManager:
 
 
         #draw arrow
-        if self.mothership:
+        if self.mothership and not self.mothership.dead:
             dir = self.mothership.pos - self.game.player.pos
             arrow = pygame.transform.rotate(self.arrow,pygame.Vector2(dir).angle_to((1,0)))
-
-            pos = self.game.screen_rect.cneter
-
-
-            self.screen.blit(arrow,(arrow.get_width()//2))
+            pos = glm.vec2(self.screen.get_size())//2 + glm.normalize(dir)*500
+            if pos.x < 0:
+                pos.x = 0
+            elif pos.x >= self.screen.get_width():
+                pos.x = self.screen.get_width()
+            if pos.y < 0:
+                pos.y = 0
+            elif pos.y >= self.screen.get_height():
+                pos.y = self.screen.get_height()
+                
+            print(glm.normalize(dir)*300,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))
+            self.screen.blit(arrow,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))
 
 
