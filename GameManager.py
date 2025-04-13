@@ -26,11 +26,16 @@ class GameManager:
 
         self.level_up_sfx = pygame.Sound('./music/sfx/lvl_up.mp3')
         self.level_up_sfx.set_volume(pygame.mixer_music.get_volume())
-
         self.mothership = None
     
     def start_game(self):
-        pass
+        #spawn a bunch of random enemies 
+        import random
+        for i in range(200):
+            rx = random.randint(0,MAP.w)
+            ry = random.randint(0,MAP.h)
+            self.game.spawnEntity(enemyFactory('basic',glm.vec2(rx,ry),random.random()*2*pi))
+
     def pre_update(self):
         keys = pygame.key.get_just_pressed()
         if keys[pygame.K_c]:
@@ -85,18 +90,15 @@ class GameManager:
         #draw arrow
         if self.mothership and not self.mothership.dead:
             dir = self.mothership.pos - self.game.player.pos
-            arrow = pygame.transform.rotate(self.arrow,pygame.Vector2(dir).angle_to((1,0)))
-            pos = glm.vec2(self.screen.get_size())//2 + glm.normalize(dir)*500
-            if pos.x < 0:
-                pos.x = 0
-            elif pos.x >= self.screen.get_width():
-                pos.x = self.screen.get_width()
-            if pos.y < 0:
-                pos.y = 0
-            elif pos.y >= self.screen.get_height():
-                pos.y = self.screen.get_height()
-                
-            print(glm.normalize(dir)*300,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))
-            self.screen.blit(arrow,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))
-
-
+            if glm.length(dir) > 700: 
+                arrow = pygame.transform.rotate(self.arrow,pygame.Vector2(dir).angle_to((1,0)))
+                pos = glm.vec2(self.screen.get_size())//2 + glm.normalize(dir)*500
+                if pos.x < 0:
+                    pos.x = 0
+                elif pos.x >= self.screen.get_width():
+                    pos.x = self.screen.get_width()
+                if pos.y < 0:
+                    pos.y = 0
+                elif pos.y >= self.screen.get_height():
+                    pos.y = self.screen.get_height()
+                self.screen.blit(arrow,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))

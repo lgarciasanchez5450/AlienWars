@@ -60,6 +60,7 @@ class Game:
         self.screen_rect = pygame.Rect(0,0,window.size[0]+1,window.size[1]+1)
         self.ent_draw_rect = pygame.Rect(0,0,window.size[0]+1+CHUNK_SIZE,window.size[1]+1+CHUNK_SIZE)
         self.kill_count = 0
+        
             
     def run(self):
 

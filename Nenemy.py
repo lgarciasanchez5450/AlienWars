@@ -156,7 +156,7 @@ class Nenemy(Spaceship):
         self.force = glm.vec2()
 
     def update(self, map, dt, game:"Game"):
-        if game.frame % Nenemy.every == self.id:
+        if game.frame % Nenemy.every == self.id % Nenemy.every:
             self.higher_order_processing(map,dt,game)
         elif self._goal:
             self._goal.update(map,game)
