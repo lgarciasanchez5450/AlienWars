@@ -283,6 +283,8 @@ class Mothership(Nenemy):
         self.t_next_spawn = 0
         self.spawn_cap = 75
         self.spawns:list[Nenemy] = []
+        self.start_spawn_count = 10
+
 
     def spawnShip(self,game:"Game"):
         new_ship = enemyFactory('basic',glm.circularRand(300)+self.pos,self.rot)
@@ -302,6 +304,9 @@ class Mothership(Nenemy):
         self._goal.reload(map,game)
     
     def update(self, map, dt, game:"Game"):
+        while self.start_spawn_count:
+            self.spawnShip(game)
+            self.start_spawn_count -=1
         return super().update(map, dt, game)
 
     def onCollide(self, other):
