@@ -110,7 +110,7 @@ class AttackGoal(Goal):
             ent.dirty = True
         if ent.atk_1.next_atk_time < game.time:
             pos = glm.vec2(ent.pos)+28*glm.vec2(glm.cos(-ent.rot),glm.sin(-ent.rot))
-            game.spawnEntity(ent.atk_1.makeBullet(pos,ent.vel,ent.rot))
+            game.spawnEntities(ent.atk_1.getBullets(pos,ent.vel,ent.rot))
             ent.atk_1.resetAttackTime(game.time)
 
 class RetreatGoal(Goal):

@@ -50,6 +50,9 @@ class Game:
 
     def spawnEntity(self,entity:Entity):
         self.to_spawn.append(entity)
+    
+    def spawnEntities(self, entities:list[Entity]):
+        self.to_spawn.extend(entities)
 
     def toWorldCoords(self,screen_cords:glm.vec2):
         return screen_cords + self.camera_pos - half_screen_size
