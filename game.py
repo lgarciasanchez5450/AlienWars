@@ -7,6 +7,8 @@ from Playership import Playership
 import physics
 from Nenemy import enemyFactory
 from Input import Input
+
+
 import gui
 if not __debug__:
     import builtins
@@ -58,10 +60,13 @@ class Game:
                 if event.type == pygame.KEYDOWN: #TODO move some of this logic to player class and 
                     if event.key == pygame.K_SPACE:
                         pass
-                        # self.entities.append(Bullet(glm.vec2(player.pos)+30*glm.vec2(glm.cos(-player.rot),glm.sin(-player.rot)),player.vel,player.rot))    
                     if event.key == pygame.K_q:
                         self.entities.append(
                             enemyFactory('basic',self.player.pos+glm.circularRand(200),glm.linearRand(0,2*pi))
+                        )
+                    if event.key == pygame.K_m:
+                        self.entities.append(
+                            enemyFactory('mothership',self.player.pos+glm.circularRand(100),glm.linearRand(2,2*pi))
                         )
 
             map = build_map(self.entities)
@@ -143,10 +148,12 @@ class MainMenu:
 
 if __name__=='__main__':
     pygame.init()
-
+    pygame.mixer.music.load('music/song 2.mp3')
+    pygame.mixer_music.play()
     m = MainMenu()
     m.run()
-
-
+    pygame.mixer.music.unload()
+    pygame.mixer.music.load('music/song 1.mp3')
+    pygame.mixer_music.play()
     g = Game()
     g.run()

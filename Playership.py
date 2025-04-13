@@ -5,7 +5,7 @@ import pygame
 from Input import Input
 from Attacks import BasicEnemyAttack
 import math
-img=  pygame.image.load('./Images/ship.png')
+img=  pygame.image.load('./Images/TeamA/Ship/0.png')
 
 def expDecay(a,b,decay:float,dt:float):
   return b+(a-b)*math.exp(-decay*dt)

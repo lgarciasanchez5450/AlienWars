@@ -4,6 +4,7 @@ import random
 img= pygame.image.load('./Images/nship.png')
 import physics
 
+
 def dprint(*args):
     import sys
     sys.stdout.write(' '.join([str(a) for a in args])+'\n')
@@ -13,13 +14,35 @@ class Goal:
     RETREAT = 1
     PROTECT = 2
     ATTACK = 3
+    M_SPAWN = 4
+    M_TURTLE = 5
     def __init__(self,entity:Spaceship):
         self.entity = entity
     def update(self,map,game): ...
     def reload(self,map,game:"Game"): ...
 
-class Wander(Goal):
+class MotherShipSpawnGoal(Goal):
+    def __init__(self, entity:"Mothership"):
+        super().__init__(entity)
+        self.entity:Mothership
 
+    def reload(self, map, game):
+        pass
+
+    def update(self, map, game:"Game"):
+        if self.entity.t_next_spawn < game.time:
+            if len(self.entity.spawns) < self.entity.spawn_cap:
+                self.entity.spawnShip(game)
+            else:
+                for i in range(len(self.entity.spawns)):
+                    if self.entity.spawns[i].dead:
+                        self.entity.spawns.pop(i)
+                        self.entity.spawnShip(game)
+                        break
+
+            self.entity.t_next_spawn = game.time + self.entity.spawn_speed
+    
+class Wander(Goal):
     def reload(self,map,game:"Game"): 
         big_rect = pygame.Rect(0,0,300,300)
         big_rect.center = self.entity.pos
@@ -100,11 +123,10 @@ class Nenemy(Spaceship):
     team = 'B'
     every = 60
     _uid = 0
-    def __init__(self, pos, rot):
-        super().__init__(pos, rot, 3,img.convert_alpha())
+    def __init__(self, pos, rot,hp = 3,img= img):
+        super().__init__(pos, rot,hp,img)
         self.every = 1
         self.id = Nenemy._uid
-        self
         self._goal = None
         self.goal = Goal.WANDER
         Nenemy._uid += 1
@@ -118,7 +140,6 @@ class Nenemy(Spaceship):
         super().update(map,dt,input,game)
 
     def higher_order_processing(self,map:MapType,dt:float,input:Input,game:"Game"):
-        dprint('hop')
         if self._goal is None: 
             self.goal = Goal.WANDER
             self._goal = Wander(self)
@@ -139,6 +160,25 @@ class Nenemy(Spaceship):
                         self._goal = AttackGoal(self,ent)
         self._goal.reload(map,game)
 
+class Mothership(Nenemy):
+    def __init__(self, pos, rot):
+        super().__init__(pos, rot,100,pygame.image.load('Images/nship.png'))
+        self.spawn_speed = 20 #
+        self.t_next_spawn = 0
+        self.spawn_cap = 75
+        self.spawns:list[Spaceship] = []
+
+    def spawnShip(self,game:"Game"):
+        new_ship = enemyFactory('basic',self.pos,self.rot)
+        self.spawns.append(new_ship)
+        game.entities.append(new_ship)
+
+    def higher_order_processing(self, map, dt, input, game:"Game"):
+        if self._goal is None:
+            self.goal = Goal.M_SPAWN
+            self._goal = MotherShipSpawnGoal(self)
+        self._goal.reload(map,game)
+
 type enemytype = typing.Literal['basic','mothership']
 
 def enemyFactory(type:enemytype,pos,rot):
@@ -147,5 +187,5 @@ def enemyFactory(type:enemytype,pos,rot):
         emy.atk_1 = BasicEnemyAttack()
         return emy
     elif type== 'mothership':
-        emy = Nenemy(pos,rot)
-        raise NotImplementedError('lol not made yet :)')
+        emy = Mothership(pos,rot)
+        return emy
