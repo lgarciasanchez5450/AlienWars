@@ -60,7 +60,7 @@ class Game:
         self.input = Input()
 
         self.player = Playership(
-            glm.vec2(0,0),
+            glm.vec2(MAP.centerx+random.randint(-500,500),MAP.centery+random.randint(-500,500)),
             pi/2,
             30
         )
@@ -105,10 +105,10 @@ class Game:
                 if event.type == pygame.QUIT:
                     sys.exit(0)
                 if event.type == pygame.KEYDOWN: #TODO move some of this logic to player class and 
-                    if event.key == pygame.K_q:
-                        self.entities.append(
-                            enemyFactory('basic',self.player.pos+glm.circularRand(200),glm.linearRand(0,2*pi))
-                        )
+
+                    if event.key == pygame.K_d:
+                        if event.mod& pygame.KMOD_CTRL:
+                            self.player.hp = self.player.hp_max = 9999999
                     if __debug__:
                         if event.key == pygame.K_F3:
                             f3_mode = True
@@ -116,26 +116,48 @@ class Game:
                             time_frame = True
             if __debug__:
                 if time_frame:
-                    pass
+                    time_a = time.perf_counter()
             self.scene_manager.pre_update()
+            if __debug__:
+                if time_frame:
+                    time_b = time.perf_counter() 
             self.entities.extend(self.to_spawn)
             for e in self.to_spawn:
                 if e.dirty:
                     e.regenerate_physics()
                     e.dirty = False
             self.to_spawn.clear()
+            if __debug__:
+                if time_frame:
+                    time_c = time.perf_counter()
+          
             map = build_map(self.entities)
+            if __debug__:
+                if time_frame:
+                    time_d = time.perf_counter()
             # update all entities
             for e in self.entities:
                 e.update(map, self.dt, self)
+            if __debug__:
+                if time_frame:
+                    time_e = time.perf_counter()
             self.scene_manager.post_update(map)
+            if __debug__:
+                if time_frame:
+                    time_f = time.perf_counter()
 
             for e in self.entities:
                 if e.dirty:
                     e.regenerate_physics()
                     e.dirty = False
+            if __debug__:
+                if time_frame:
+                    time_g = time.perf_counter()
             #do physics
             physics.do_physics(self.entities,map)
+            if __debug__:
+                if time_frame:
+                    time_h = time.perf_counter()
             #remove dead entities
             for i in range(len(self.entities)-1,-1,-1):
                 if self.entities[i].dead:
@@ -144,10 +166,23 @@ class Game:
                     del self.entities[i]    
 
             self.draw(map)
+            if __debug__:
+                if time_frame:
+                    time_i = time.perf_counter()
             self.asyncCtx.update()
             if __debug__:
                 if f3_mode:
                     screen.blit(dbg_font.render(f'{self.player.pos.x:.0f}/{self.player.pos.y:.0f}',True,'white'))
+                if time_frame:
+                    print(f'a -> b {1000*(time_b-time_a):.2f} ms')
+                    print(f'Spawn {1000*(time_c-time_b):.2f} ms')
+                    print(f'Spawn {1000*(time_d-time_c):.2f} ms')
+                    print(f'Update {1000*(time_e-time_d):.2f} ms')
+                    print(f'Post Update {1000*(time_f-time_e):.2f} ms')
+                    print(f'Cleanup {1000*(time_g-time_f):.2f} ms')
+                    print(f'Physics {1000*(time_h-time_g):.2f} ms')
+                    print(f'h -> i {1000*(time_i-time_h):.2f} ms')
+                    time_frame = False
             t_end = time.perf_counter()
             window.flip()
             t_final = time.perf_counter()
