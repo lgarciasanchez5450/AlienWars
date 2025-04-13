@@ -68,6 +68,7 @@ class Bullet(Entity):
         self.rect.center = self.pos
 
     def onCollide(self, other):
+        # print('bullet colliding with',other)
         self.dead = True
 
 class Attack:
@@ -91,9 +92,9 @@ class Spaceship(Entity):
         self.hp = hp
         self.hp_max = hp
         self._surf = img
-        self.regenerate_physics()
 
     def onCollide(self, other):
+        
         if isinstance(other,Bullet):
             self.hp -= other.dmg
             if self.hp <= 0:

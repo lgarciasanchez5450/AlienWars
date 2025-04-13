@@ -275,7 +275,10 @@ class Nenemy(Spaceship):
 
 class Mothership(Nenemy):
     def __init__(self, pos, rot):
-        super().__init__(glm.vec2(pos), rot,100,pygame.image.load('Images/TeamB/1.png'))
+        mother = pygame.image.load('Images/TeamB/1.png').convert()
+        mother.set_alpha(100)
+        mother.set_colorkey('white')
+        super().__init__(glm.vec2(pos), rot,100,mother)
         self.spawn_speed = 10
         self.t_next_spawn = 0
         self.spawn_cap = 75
@@ -284,7 +287,7 @@ class Mothership(Nenemy):
     def spawnShip(self,game:"Game"):
         new_ship = enemyFactory('basic',glm.circularRand(300)+self.pos,self.rot)
         self.spawns.append(new_ship)
-        game.entities.append(new_ship)
+        game.spawnEntity(new_ship)
         if type(self._goal) is not MotherShipSpawnGoal:
             print(self._goal)
 
@@ -302,8 +305,11 @@ class Mothership(Nenemy):
         return super().update(map, dt, game)
 
     def onCollide(self, other):
-        super().onCollide(other)
-        print(self.hp)
+        print(other)
+        if isinstance(other,Bullet):
+            self.hp -= other.dmg
+            if self.hp <= 0:
+                self.dead = True
 type enemytype = typing.Literal['basic','mothership']
 
 def enemyFactory(type:enemytype,pos:glm.vec2,rot):
