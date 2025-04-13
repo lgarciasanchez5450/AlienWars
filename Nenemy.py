@@ -4,7 +4,11 @@ import random
 img= pygame.image.load('./Images/nship.png')
 import physics
 
-
+def deltaAngle(a:float,b:float):
+    d_rot = (a - b) %TWO_PI
+    if d_rot > pi:
+        d_rot -= TWO_PI
+    return d_rot
 def dprint(*args):
     import sys
     sys.stdout.write(' '.join([str(a) for a in args])+'\n')
@@ -65,6 +69,8 @@ class Wander(Goal):
         if abs(d_rot) > 0.1:
             self.entity.rot += d_rot * game.dt
             self.entity.dirty = True
+        
+        # if d_rot/pi
 
 class AttackGoal(Goal):
     def __init__(self, entity,target:Spaceship):
@@ -87,8 +93,8 @@ class AttackGoal(Goal):
             ent.rot += max(-1,min(d_rot,1)) * game.dt * 2
             ent.dirty = True
         if ent.atk_1.next_atk_time < game.time:
-            pos = glm.vec2(ent.pos)+30*glm.vec2(glm.cos(-ent.rot),glm.sin(-ent.rot))
-            game.entities.append(ent.atk_1.makeBullet(pos,ent.vel,ent.rot))
+            pos = glm.vec2(ent.pos)+28*glm.vec2(glm.cos(-ent.rot),glm.sin(-ent.rot))
+            game.spawnEntity(ent.atk_1.makeBullet(pos,ent.vel,ent.rot))
             ent.atk_1.resetAttackTime(game.time)
 
 class RetreatGoal(Goal):
@@ -162,8 +168,8 @@ class Nenemy(Spaceship):
 
 class Mothership(Nenemy):
     def __init__(self, pos, rot):
-        super().__init__(pos, rot,100,pygame.image.load('Images/nship.png'))
-        self.spawn_speed = 20 #
+        super().__init__(pos, rot,100,pygame.image.load('Images/TeamB/1.png'))
+        self.spawn_speed = 20
         self.t_next_spawn = 0
         self.spawn_cap = 75
         self.spawns:list[Spaceship] = []

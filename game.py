@@ -8,14 +8,13 @@ import physics
 from Nenemy import enemyFactory
 from Input import Input
 
-
 import gui
 if not __debug__:
     import builtins
     def _(*args,**kwargs):...
     builtins.print = _
 
-window = pygame.Window('GAME')
+window = pygame.Window('GAME',(900,600))
 screen = window.get_surface()
 
 FPS = 70
@@ -49,8 +48,21 @@ class Game:
         self.entities.append(self.player)
         self.dt = 0
         self.frame = 0
+        self.to_spawn = []
+
+    
+    def spawnEntity(self,entity:Entity):
+        self.to_spawn.append(entity)
+
+    def startScene(self):
+        enemy_mother = enemyFactory('mothership',MAP.midtop,-pi/2)
+        self.entities.append(enemy_mother)
+        for i in range(10):
+            enemy_mother.spawnShip(self)
+        
 
     def run(self):
+        self.startScene
         while True:
             t_start = time.perf_counter()
             self.time = time.perf_counter()
@@ -58,8 +70,6 @@ class Game:
                 if event.type == pygame.QUIT:
                     sys.exit(0)
                 if event.type == pygame.KEYDOWN: #TODO move some of this logic to player class and 
-                    if event.key == pygame.K_SPACE:
-                        pass
                     if event.key == pygame.K_q:
                         self.entities.append(
                             enemyFactory('basic',self.player.pos+glm.circularRand(200),glm.linearRand(0,2*pi))
@@ -68,7 +78,8 @@ class Game:
                         self.entities.append(
                             enemyFactory('mothership',self.player.pos+glm.circularRand(100),glm.linearRand(2,2*pi))
                         )
-
+            self.entities.extend(self.to_spawn)
+            self.to_spawn.clear()
             map = build_map(self.entities)
             # update all entities
             for e in self.entities:
