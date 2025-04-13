@@ -4,9 +4,14 @@ from Nenemy import enemyFactory
 if typing.TYPE_CHECKING:
     from game import Game
 from Asteroid import Asteroid, ChickenJockey
+import random
+from Attacks import *
 
 asteroid_img = pygame.image.load('./Images/Hazards/asteroid.png')
 chicken_jockey_img = pygame.image.load('./Images/ChickenJockey/chicken_jockey.png')
+pygame.font.init()
+main_font = pygame.font.Font('./font/Pixeltype.ttf', 50)
+
 class GameManager:
     def __init__(self,game:"Game",window:pygame.Window):
         self.game = game
@@ -53,9 +58,24 @@ class GameManager:
             self.player_lvl += 1
             if self.player_lvl == 2:
                 self.spawnMothership()
-            self.game.player.atk_1.reload_time *= 0.8
-            self.level_up_sfx.play()
-            self.level_up_sfx.fadeout(550)
+                self.game.player.atk_1 = Level2Attack()
+                self.game.player.hp = self.game.player.hp_max
+                self.level_up_sfx.play()
+                self.level_up_sfx.fadeout(550)
+
+            if self.player_lvl == 3:
+                self.spawnMothership()
+                self.game.player.atk_1 = Level3Attack()
+                self.game.player.hp = self.game.player.hp_max
+                self.level_up_sfx.play()
+                self.level_up_sfx.fadeout(550)
+
+            if self.player_lvl == 4:
+                self.spawnMothership()
+                self.game.player.atk_1 = Level4Attack()
+                self.game.player.hp = self.game.player.hp_max
+                self.level_up_sfx.play()
+                self.level_up_sfx.fadeout(550)
 
     def spawnMothership(self):
         self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx,MAP.top+500),0)
@@ -63,7 +83,10 @@ class GameManager:
 
 
     def post_update(self,map:MapType):
-        pass
+        if self.mothership is not None and self.mothership.dead:
+            self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx, random.random() * MAP.width),0)
+            self.game.spawnEntity(self.mothership)
+
     def ui_draw(self):
         """ I need help fixing the progress bar, sorry """
         # Create progress bar
@@ -85,8 +108,6 @@ class GameManager:
         # progress_bar_fill = pygame.Rect(progress_bar.left + 10, progress_bar.top + 6, current_width, 28)
         pygame.draw.rect(self.screen, 'darkgreen', bar_fill)
 
-
-
         #draw arrow
         if self.mothership and not self.mothership.dead:
             dir = self.mothership.pos - self.game.player.pos
@@ -102,3 +123,11 @@ class GameManager:
                 elif pos.y >= self.screen.get_height():
                     pos.y = self.screen.get_height()
                 self.screen.blit(arrow,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))
+        
+        hp_surf = main_font.render('HP: ' + str(self.game.player.hp), False, 'White')
+        hp_rect = hp_surf.get_rect(topleft = (15, 15))
+        self.screen.blit(hp_surf, hp_rect)
+
+        level_surf = main_font.render('LEVEL: ' + str(self.player_lvl), False, 'White')
+        level_rect = level_surf.get_rect(topleft = (self.screen.width - 135, 15))
+        self.screen.blit(level_surf, level_rect)

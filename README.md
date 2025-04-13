@@ -1,5 +1,5 @@
 # AlienWars
-A game a obut aliens and wars
+A game about aliens and wars
 
 Using External Packages: 
     pygame-ce
