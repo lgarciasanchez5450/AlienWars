@@ -24,7 +24,28 @@ FPS = 70
 bg_image = pygame.image.load('./Images/T8g30s.png')
 bg_image= pygame.transform.scale(bg_image,window.size).convert()
 # bg_image = pygame.transform.scale_by(bg_image,5).convert()
+type Coroutine[T] = typing.Generator[typing.Any,typing.Any,T]
+from collections import deque
+class AsyncContext:
+    def __init__(self) -> None:
+        self.coros:deque[Coroutine] = deque()
 
+    def update(self) -> tuple[Coroutine,typing.Any]|None:
+        if not self.coros: return
+        coro = self.coros.popleft()
+        try:
+            next(coro)
+        except StopIteration as e:
+            return coro,e.value
+        else:
+            self.coros.append(coro)
+
+    def addCoroutine(self,coro:Coroutine):
+        self.coros.append(coro)
+
+    def getNumCoros(self):
+        return len(self.coros)
+    
 
 
 half_screen_size = glm.vec2(window.size)/2
@@ -49,6 +70,8 @@ class Game:
         self.dt = 0
         self.frame = 0
         self.to_spawn:list[Entity] = []
+
+        self.asyncCtx = AsyncContext()
 
     def spawnEntity(self,entity:Entity):
         self.to_spawn.append(entity)
@@ -86,7 +109,11 @@ class Game:
                     if __debug__:
                         if event.key == pygame.K_F3:
                             f3_mode = True
-            
+                        if event.key == pygame.K_F4:
+                            time_frame = True
+            if __debug__:
+                if time_frame:
+                    pass
             self.scene_manager.pre_update()
             self.entities.extend(self.to_spawn)
             for e in self.to_spawn:
@@ -104,7 +131,6 @@ class Game:
                 if e.dirty:
                     e.regenerate_physics()
                     e.dirty = False
-
             #do physics
             physics.do_physics(self.entities,map)
             #remove dead entities
@@ -115,6 +141,7 @@ class Game:
                     del self.entities[i]    
 
             self.draw(map)
+            self.asyncCtx.update()
             if __debug__:
                 if f3_mode:
                     screen.blit(dbg_font.render(f'{self.player.pos.x:.0f}/{self.player.pos.y:.0f}',True,'white'))
@@ -134,13 +161,6 @@ class Game:
             surf = useCache(generate,cpos,self.background)
             screen.blit(surf,glm.floor(half_screen_size+(cpos[0]*BG_CHUNK_SIZE-self.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-self.camera_pos.y)))
         for e in physics.get_colliding(self.ent_draw_rect,map):
-            from Nenemy import Mothership
-            # if type(e) is Mothership:
-            #     s_= pygame.Surface(e.mask.get_size(),pygame.SRCALPHA)
-            #     pygame.draw.polygon(s_,(200,150,150),e.mask.outline(),0)
-            #     pygame.draw.rect(screen,'blue',e.rect.move(-self.camera_pos+half_screen_size))
-            #     screen.blit(pygame.transform.rotate(s_,e.rot),e.pos-self.camera_pos+half_screen_size-glm.vec2(s_.get_size())//2)
-                
             surf = e.surf
             screen.blit(surf,e.pos-self.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
         self.scene_manager.ui_draw()

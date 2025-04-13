@@ -276,7 +276,7 @@ class Nenemy(Spaceship):
 class Mothership(Nenemy):
     def __init__(self, pos, rot):
         mother = pygame.image.load('Images/TeamB/1.png').convert()
-        mother.set_alpha(100)
+        mother = pygame.transform.scale_by(mother,0.8)
         mother.set_colorkey('white')
         super().__init__(glm.vec2(pos), rot,100,mother)
         self.spawn_speed = 10
