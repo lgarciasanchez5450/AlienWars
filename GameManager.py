@@ -4,6 +4,7 @@ from Nenemy import enemyFactory
 if typing.TYPE_CHECKING:
     from game import Game
 from Asteroid import Asteroid, ChickenJockey
+import random
 
 asteroid_img = pygame.image.load('./Images/Hazards/asteroid.png')
 chicken_jockey_img = pygame.image.load('./Images/ChickenJockey/chicken_jockey.png')
@@ -63,7 +64,9 @@ class GameManager:
 
 
     def post_update(self,map:MapType):
-        pass
+        if self.mothership is not None and self.mothership.dead:
+            self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx, random.random() * MAP.width),0)
+            self.game.spawnEntity(self.mothership)
     def ui_draw(self):
         """ I need help fixing the progress bar, sorry """
         # Create progress bar

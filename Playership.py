@@ -15,8 +15,7 @@ class Playership(ChunkManager.Spaceship):
     def __init__(self, pos, rot, hp):
         _surf = img.convert_alpha()
         super().__init__(pos, rot, hp,_surf)
-        self.atk_1 = Level3Attack()
-        self.atk_1.reload_time = 0.5
+        self.atk_1 = EightShotPassive()
 
     def update(self,map:ChunkManager.MapType, dt,game:"ChunkManager.Game"):
         keys = pygame.key.get_pressed()

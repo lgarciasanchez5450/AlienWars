@@ -69,7 +69,6 @@ class Bullet(Entity):
 
     def onCollide(self, other):
         self.dead = True
-
 class Attack:
     reload_time:float
     next_atk_time:float
