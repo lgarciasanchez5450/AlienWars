@@ -57,8 +57,7 @@ class MotherShipPanicGoal(Goal):
 
     def reload(self, map, game):
         for sub in self.entity.spawns:
-            sub.defendShip(self,100,map,game)
-
+            sub.defendShip(self.entity,200,map,game)
 
 class ProtectGoal(Goal):
     class STATE:
@@ -79,13 +78,13 @@ class ProtectGoal(Goal):
     def update(self, map, game:"Game"):
         ent = self.entity
         if self.state == ProtectGoal.STATE.OUTSIDE:
-            dif = self.protectee - ent.pos
+            dif = self.protectee.pos - ent.pos
             sqrDst =  glm.length2(dif)
             if sqrDst < self.p_rad: 
                 self.state = ProtectGoal.STATE.NEAR
                 big_rect = pygame.Rect(0,0,300,300)
                 big_rect.center = ent.pos
-                for other in physics.get_colliding(big_rect):
+                for other in physics.get_colliding(big_rect,map):
                     if other is self.protectee: continue
                     if isinstance(other,Nenemy):
                         o_goal = other._goal
@@ -149,14 +148,9 @@ class AttackGoal(Goal):
         self.target = target
 
     def reload(self,map,game:"Game"):
-        pass 
-
-
-
-        # big_rect = pygame.Rect(0,0,300,300)
-        # big_rect.center = self.entity.pos
-        # self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity]
-        
+        big_rect = pygame.Rect(0,0,75,75)
+        big_rect.center = self.entity.pos
+        self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity and isinstance(e,Nenemy)]
         
     def update(self, map, game:"Game"):
         ent = self.entity
@@ -172,6 +166,13 @@ class AttackGoal(Goal):
             pos = glm.vec2(ent.pos)+28*glm.vec2(glm.cos(-ent.rot),glm.sin(-ent.rot))
             game.spawnEntities(ent.atk_1.getBullets(pos,ent.vel*2,ent.rot))
             ent.atk_1.resetAttackTime(game.time)
+        for s in self.around:
+            dif = ent.pos - s.pos
+            d = glm.length(dif)
+            d /= 50    
+            if d < 1:
+                m = (d-1)*(d-1) * 1000
+                ent.vel += dif * m * game.dt
 
         ent.moveRel(glm.vec2(1,0)*(glm.length(dpos)-200)*10) 
 
@@ -259,6 +260,14 @@ class Nenemy(Spaceship):
                         # dprint('Goal Changed to Attack')
                         self.goal = Goal.ATTACK
                         self._goal = AttackGoal(self,ent)
+        elif self.goal is Goal.ATTACK:
+            assert isinstance(self._goal,AttackGoal)
+            if glm.distance2(self._goal.target.pos,self.pos) > 1000*1000:
+                self.goal = Goal.WANDER
+                self._goal = Wander(self)
+            elif self._goal.target.dead:
+                self.goal = Goal.WANDER
+                self._goal = Wander(self)
         else:
             if 5 > 6:
                 self._goal = ProtectGoal() #type: ignore
@@ -292,6 +301,9 @@ class Mothership(Nenemy):
     def update(self, map, dt, game:"Game"):
         return super().update(map, dt, game)
 
+    def onCollide(self, other):
+        super().onCollide(other)
+        print(self.hp)
 type enemytype = typing.Literal['basic','mothership']
 
 def enemyFactory(type:enemytype,pos:glm.vec2,rot):
