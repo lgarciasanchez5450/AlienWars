@@ -8,7 +8,7 @@ class BasicEnemyAttack(Attack):
     
     def getBullets(self,pos,bvel,rot):
         b = Bullet(pos,rot)
-        b.vel += bvel
+        b.vel += bvel * 1.5
         return [b]
 
 class Level2Attack(Attack):

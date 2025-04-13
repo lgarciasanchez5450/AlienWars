@@ -6,6 +6,7 @@ if typing.TYPE_CHECKING:
 from Asteroid import Asteroid, ChickenJockey
 import random
 from Attacks import *
+import time
 
 asteroid_img = pygame.image.load('./Images/Hazards/asteroid.png')
 chicken_jockey_img = pygame.image.load('./Images/ChickenJockey/chicken_jockey.png')
@@ -26,12 +27,14 @@ class GameManager:
         self.arrow = pygame.image.load('./Images/arrow.png').convert()
         self.arrow.set_colorkey((0,0,0))
 
+        self.level_up_sfx = pygame.Sound('./music/sfx/lvl_up.mp3')
+        self.level_up_sfx.set_volume(pygame.mixer_music.get_volume())
+
         self.kill_count_intervals = [0,20,40,70,100,200,400,600,800,1000,1400,99999999999999999]
         self.player_lvl = 1
 
-        self.level_up_sfx = pygame.Sound('./music/sfx/lvl_up.mp3')
-        self.level_up_sfx.set_volume(pygame.mixer_music.get_volume())
         self.mothership = None
+        self.just_spawned = False
     
     def start_game(self):
         #spawn a bunch of random enemies 
@@ -61,25 +64,33 @@ class GameManager:
                 self.game.player.atk_1 = Level2Attack()
                 self.game.player.hp = self.game.player.hp_max
                 self.level_up_sfx.play()
-                self.level_up_sfx.fadeout(550)
+
 
             if self.player_lvl == 3:
                 self.spawnMothership()
                 self.game.player.atk_1 = Level3Attack()
                 self.game.player.hp = self.game.player.hp_max
                 self.level_up_sfx.play()
-                self.level_up_sfx.fadeout(550)
+
 
             if self.player_lvl == 4:
                 self.spawnMothership()
                 self.game.player.atk_1 = Level4Attack()
                 self.game.player.hp = self.game.player.hp_max
                 self.level_up_sfx.play()
-                self.level_up_sfx.fadeout(550)
+
+            
+            if self.player_lvl == 5:
+                self.spawnMothership()
+                
 
     def spawnMothership(self):
         self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx,MAP.top+500),0)
         self.game.spawnEntity(self.mothership)
+        self.just_spawned = True
+        mothership_sound = pygame.mixer.Sound('./music/sfx/boss_spawn.mp3')
+        mothership_sound.set_volume(pygame.mixer_music.get_volume())
+        mothership_sound.play()
 
 
     def post_update(self,map:MapType):
@@ -131,3 +142,18 @@ class GameManager:
         level_surf = main_font.render('LEVEL: ' + str(self.player_lvl), False, 'White')
         level_rect = level_surf.get_rect(topleft = (self.screen.width - 135, 15))
         self.screen.blit(level_surf, level_rect)
+
+        if self.just_spawned:
+            spawned_surf = main_font.render('The Mothership has arrived!', False, 'White')
+            spawned_rect = spawned_surf.get_rect(center = (self.screen.width // 2, self.screen.height - 120))
+            self.screen.blit(spawned_surf, spawned_rect)
+            
+            def spawn_text_timer():
+                starttime = time.perf_counter()
+
+                while time.perf_counter() < starttime + 5:
+                    self.screen.blit(spawned_surf, spawned_rect)
+                    yield
+
+            self.game.asyncCtx.addCoroutine(spawn_text_timer())
+            self.just_spawned = False
