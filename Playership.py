@@ -15,7 +15,7 @@ class Playership(ChunkManager.Spaceship):
     def __init__(self, pos, rot, hp):
         _surf = img.convert_alpha()
         super().__init__(pos, rot, hp,_surf)
-        self.atk_1 = EightShotPassive()
+        self.atk_1 = BasicEnemyAttack()
 
     def update(self,map:ChunkManager.MapType, dt,game:"ChunkManager.Game"):
         keys = pygame.key.get_pressed()
@@ -33,6 +33,7 @@ class Playership(ChunkManager.Spaceship):
             if self.atk_1.next_atk_time < game.time:
                 game.spawnEntities(self.atk_1.getBullets(glm.vec2(self.pos)+40*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))
                 self.atk_1.resetAttackTime(game.time)
+
         # changing rotation based on cursor positioning 
         mouse_pos = pygame.mouse.get_pos()
         difference = game.toWorldCoords(mouse_pos) - self.pos 

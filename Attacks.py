@@ -2,9 +2,9 @@ from ChunkManager import *
 
 #Here make a bunch of subclasses of Attack
 class BasicEnemyAttack(Attack):
-    reload_time = 1
+    reload_time = 0.6
     next_atk_time = 0
-    bullet_power = 1
+    bullet_power = 2
     
     def getBullets(self,pos,bvel,rot):
         b = Bullet(pos,rot)
@@ -12,13 +12,13 @@ class BasicEnemyAttack(Attack):
         return [b]
 
 class Level2Attack(Attack):
-    reload_time = 0.4
+    reload_time = 0.2
     next_atk_time = 0
     bullet_power = 4
 
     def getBullets(self, pos, bvel, rot):
-        b = Bullet(pos, rot)
-        b.vel += bvel
+        b = BlueBullet(pos, rot)
+        b.vel += bvel * 1.5
         b.dmg = self.bullet_power
         return [b]
     
@@ -35,7 +35,7 @@ class Level3Attack(Attack):
             p_rot = rot+direction_angles[i]*2
             dir = glm.vec2(glm.cos(-p_rot), glm.sin(-p_rot))
             new_bullet = Bullet(pos + 15 * dir,new_rot)
-            new_bullet.vel += bvel
+            new_bullet.vel += bvel * 1.5
             bullets.append(new_bullet)
         return bullets
     
@@ -53,7 +53,7 @@ class Level4Attack(Attack):
             p_rot = rot+direction_angles[i]*2
             dir = glm.vec2(glm.cos(-p_rot), glm.sin(-p_rot))
             new_bullet = BlueBullet(pos + 30 * dir,new_rot)
-            new_bullet.vel += bvel
+            new_bullet.vel += bvel * 1.5
             bullets.append(new_bullet)
         return bullets
 
