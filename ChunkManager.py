@@ -76,7 +76,7 @@ class Attack:
     bullet_power:float
     def resetAttackTime(self,cur_time:float):
         self.next_atk_time = cur_time + self.reload_time
-    def makeBullet(self,pos,bvel,rot) -> Bullet: ...
+    def getBullets(self,pos,bvel,rot) -> list[Bullet]: ...
 
 class Spaceship(Entity):
     count_kill = True
