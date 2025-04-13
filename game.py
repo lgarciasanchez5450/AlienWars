@@ -112,7 +112,7 @@ class Game:
             for e in physics.get_colliding(ent_draw_rect,map):
                 surf = e.surf
                 screen.blit(surf,e.pos-inp.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
-            scene_manager.ui_draw(map)
+            scene_manager.ui_draw()
 
             if __debug__:
                 if f3_mode:
