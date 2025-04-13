@@ -32,8 +32,17 @@ class Level3Attack(Attack):
         offset = [90*pi/180, 0, -90*pi/180]
         direction_angles = [-15*pi/180, 0, 15*pi/180]
         for i in range(3):
-            new_bullet = Bullet(pos + 15 * glm.vec2(glm.cos(offset[i]), glm.sin(offset[i])), rot + direction_angles[i])
+            new_bullet = Bullet(pos + 30 * glm.vec2(glm.cos(rot - offset[i]), glm.sin( rot - offset[i])), rot + direction_angles[i])
             new_bullet.vel += bvel
             bullets.append(new_bullet)
+        print(rot)
         return bullets
 
+class SixShotPassive(Attack):
+    reload_time = 0.4
+    next_atk_time = 0
+    bullet_power = 2
+
+    def getBullets(self, pos, bvel, rot):
+        bullets = []
+        offset = [90*pi/180, 0, -90*pi/180]
