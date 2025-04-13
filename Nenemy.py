@@ -1,7 +1,7 @@
 from ChunkManager import *
 from Attacks import *
 import random
-img= pygame.image.load('./Images/nship.png')
+enemy_img = pygame.transform.scale_by(pygame.image.load('./Images/TeamB/0.png'), 1.75)
 import physics
 
 def expDecay(a,b,decay:float,dt:float):
@@ -145,7 +145,8 @@ class Nenemy(Spaceship):
     team = 'B'
     every = 60
     _uid = 0
-    def __init__(self, pos, rot,hp = 3,img= img):
+    def __init__(self, pos, rot,hp = 3,img=None):
+        img = img or enemy_img.convert_alpha()
         super().__init__(pos, rot,hp,img)
         self.every = 1
         self.id = Nenemy._uid
@@ -179,7 +180,7 @@ class Nenemy(Spaceship):
             self._goal = RetreatGoal(self)
             dprint('changin to retreat goal')
         elif self.goal is Goal.WANDER:
-            big_rect = pygame.Rect(0,0,150,150)
+            big_rect = pygame.Rect(0,0,500,500)
             big_rect.center = self.pos
             for ent in physics.get_colliding(big_rect,map):
                 if ent is self: continue
