@@ -9,6 +9,7 @@ from Nenemy import enemyFactory
 from Input import Input
 from background_image_generator import generate
 from gui.utils.utils import useCache
+from GameManager import GameManager
 import gui
 if not __debug__:
     import builtins
@@ -52,17 +53,14 @@ class Game:
     def spawnEntity(self,entity:Entity):
         self.to_spawn.append(entity)
 
-    def startScene(self):
-        # enemy_mother = enemyFactory('mothership',MAP.midtop,-pi/2)
-        # self.entities.append(enemy_mother)
-        # for i in range(10):
-        #     enemy_mother.spawnShip(self)
-        pass
+
         
     def run(self):
-        self.startScene()
+        scene_manager = GameManager(self)
+        scene_manager.start_game()
         screen_rect = pygame.Rect(0,0,window.size[0]+1,window.size[1]+1)
         ent_draw_rect = pygame.Rect(0,0,window.size[0]+1+CHUNK_SIZE,window.size[1]+1+CHUNK_SIZE)
+        self.kill_count = 0
         if __debug__:
             f3_mode = False
             dbg_font = pygame.font.SysFont('Arial',18)
@@ -84,12 +82,15 @@ class Game:
                     if __debug__:
                         if event.key == pygame.K_F3:
                             f3_mode = True
+            
             self.entities.extend(self.to_spawn)
             self.to_spawn.clear()
             map = build_map(self.entities)
+            scene_manager.pre_update(map)
             # update all entities
             for e in self.entities:
                 e.update(map, self.dt, inp,self)
+            scene_manager.post_update(map)
 
             for e in self.entities:
                 if e.dirty:
@@ -98,20 +99,21 @@ class Game:
 
             #do physics
             physics.do_physics(self.entities,map)
-            self.entities = list(filter(lambda x:not x.dead, self.entities))
-            if __debug__:
-                screen.fill('red')
+            for i in range(len(self.entities)-1,-1,-1):
+                if self.entities[i].dead:
+                    del self.entities[i]
+                    self.kill_count+=1
             inp.camera_pos = self.player.pos
-
             screen_rect.center = inp.camera_pos
             ent_draw_rect.center = inp.camera_pos
             for cpos in physics.collide_chunks2d(screen_rect.left,screen_rect.top,screen_rect.right,screen_rect.bottom,BG_CHUNK_SIZE):
                 surf = useCache(generate,cpos,self.background)
                 screen.blit(surf,half_screen_size+(cpos[0]*BG_CHUNK_SIZE-inp.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-inp.camera_pos.y))
-            # screen.blit(bg_image,-inp.camera_pos+half_screen_size-glm.vec2(bg_image.get_size())//2)
             for e in physics.get_colliding(ent_draw_rect,map):
                 surf = e.surf
                 screen.blit(surf,e.pos-inp.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
+            scene_manager.ui_draw(map)
+
             if __debug__:
                 if f3_mode:
                     screen.blit(dbg_font.render(f'{self.player.pos.x:.0f}/{self.player.pos.y:.0f}',True,'white'))
