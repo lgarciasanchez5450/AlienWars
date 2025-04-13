@@ -16,13 +16,14 @@ if not __debug__:
     def _(*args,**kwargs):...
     builtins.print = _
 
-window = pygame.Window('GAME',(900,600),)
+window = pygame.Window('GAME',(1280,720))
 screen = window.get_surface()
 
 FPS = 700
 
 bg_image = pygame.image.load('./Images/T8g30s.png')
-bg_image = pygame.transform.scale_by(bg_image,5).convert()
+bg_image= pygame.transform.scale(bg_image,window.size).convert()
+# bg_image = pygame.transform.scale_by(bg_image,5).convert()
 
 
 
@@ -132,7 +133,12 @@ class MainMenu:
         cs = gui.ColorScheme(100,100,100)
         self.layer = gui.Layer(window.size)
         self.layer.space.addObjects(
-            gui.ui.Image((-50,-50),pygame.transform.scale_by(pygame.image.load('./Images/T8g30s.png'),2)),
+            gui.ui.Image((-0,-0),bg_image),
+            gui.ui.positioners.Aligner(
+                gui.ui.Image((0,0),pygame.image.load('Images/title.png').convert_alpha()),
+                0.5,0.2
+
+            ),
             gui.ui.WithAlpha(
                 gui.ui.positioners.Aligner(
                     gui.ui.AddText(
@@ -167,7 +173,12 @@ class MainMenu:
 
         self.settings_layer = gui.Layer(window.size)
         self.settings_layer.space.addObjects(
-            gui.ui.Image((-50,-50),pygame.transform.scale_by(pygame.image.load('./Images/T8g30s.png'),2)),
+            gui.ui.Image((0,0),bg_image),
+            gui.ui.positioners.Aligner(
+                gui.ui.Image((0,0),pygame.image.load('Images/title.png').convert_alpha()),
+                0.5,0.2
+
+            ),
             gui.ui.positioners.Resizer(
                 a:=gui.ui.Slider((0,0),(100,20),gui.ColorLayout((255,255,255),(50,50,50)),pygame.mixer.music.set_volume).setValue(pygame.mixer_music.get_volume()),
                 '20%','50%','80%','~+30'
