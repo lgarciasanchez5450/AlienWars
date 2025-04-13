@@ -67,8 +67,7 @@ class Bullet(Entity):
         self.rect.center = self.pos
 
     def onCollide(self, other):
-        if isinstance(other,Spaceship):
-            self.dead = True
+        self.dead = True
 
 class Attack:
     reload_time:float
