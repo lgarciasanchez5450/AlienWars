@@ -23,6 +23,7 @@ class Goal:
     ATTACK = 3
     M_SPAWN = 4
     M_TURTLE = 5
+    M_PANIC = 6
     def __init__(self,entity:'Nenemy'):
         self.entity = entity
     def update(self,map,game): ...
@@ -48,7 +49,62 @@ class MotherShipSpawnGoal(Goal):
                         break
 
             self.entity.t_next_spawn = game.time + self.entity.spawn_speed
+
+class MotherShipPanicGoal(Goal):
+    def __init__(self, entity:"Mothership"):
+        super().__init__(entity)
+        self.entity:Mothership
+
+    def reload(self, map, game):
+        for sub in self.entity.spawns:
+            sub.defendShip(self,100,map,game)
+
+
+class ProtectGoal(Goal):
+    class STATE:
+        OUTSIDE = 0
+        NEAR = 1
+        
+    def __init__(self, entity,protectee:Spaceship,p_radius:float):
+        super().__init__(entity)
+        self.protectee = protectee
+        self.p_rad = p_radius
+        self.state = ProtectGoal.STATE.OUTSIDE
+        self.other_protectors:list[Nenemy] = []
+
+    def reload(self, map, game:"Game"):
+        self.update(map,game)
+        pass
     
+    def update(self, map, game:"Game"):
+        ent = self.entity
+        if self.state == ProtectGoal.STATE.OUTSIDE:
+            dif = self.protectee - ent.pos
+            sqrDst =  glm.length2(dif)
+            if sqrDst < self.p_rad: 
+                self.state = ProtectGoal.STATE.NEAR
+                big_rect = pygame.Rect(0,0,300,300)
+                big_rect.center = ent.pos
+                for other in physics.get_colliding(big_rect):
+                    if other is self.protectee: continue
+                    if isinstance(other,Nenemy):
+                        o_goal = other._goal
+                        if type(o_goal) is ProtectGoal:
+                            if o_goal.protectee is self.protectee:
+                                self.other_protectors.append(other)
+            target_rot = glm.atan(-dif.y,dif.x)
+            d_rot = deltaAngle(target_rot,ent.rot)
+            if abs(d_rot) > 0.05:
+                ent.rot += d_rot * game.dt
+                ent.dirty = True
+            ent.moveRel(glm.vec2(1,0)*500)
+        elif self.state == ProtectGoal.STATE.NEAR:
+            force = glm.vec2()
+            e_pos = ent.pos
+            for other_protector in self.other_protectors:
+                force += 0.5 * (e_pos - other_protector.pos)
+
+            pass
 class Wander(Goal):
     def __init__(self, entity):
         super().__init__(entity)
@@ -62,7 +118,6 @@ class Wander(Goal):
             random.random()*MAP.w,
             random.random()*MAP.h
         )
-        print(self.target,self.entity.pos,glm.distance(self.target,self.entity.pos))
         if (dst2:=glm.distance2(self.target,self.entity.pos)) > 100*100:
             # print(glm.distance(self.target,self.entity.pos),end=' ')
             # print(dst2, math.sqrt(dst2-100*100))
@@ -93,10 +148,15 @@ class AttackGoal(Goal):
         super().__init__(entity)
         self.target = target
 
-    def reload(self,map,game:"Game"): 
-        big_rect = pygame.Rect(0,0,300,300)
-        big_rect.center = self.entity.pos
-        self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity]
+    def reload(self,map,game:"Game"):
+        pass 
+
+
+
+        # big_rect = pygame.Rect(0,0,300,300)
+        # big_rect.center = self.entity.pos
+        # self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity]
+        
         
     def update(self, map, game:"Game"):
         ent = self.entity
@@ -110,8 +170,10 @@ class AttackGoal(Goal):
             ent.dirty = True
         if ent.atk_1.next_atk_time < game.time:
             pos = glm.vec2(ent.pos)+28*glm.vec2(glm.cos(-ent.rot),glm.sin(-ent.rot))
-            game.spawnEntity(ent.atk_1.makeBullet(pos,ent.vel,ent.rot))
+            game.spawnEntity(ent.atk_1.makeBullet(pos,ent.vel*2,ent.rot))
             ent.atk_1.resetAttackTime(game.time)
+
+        ent.moveRel(glm.vec2(1,0)*(glm.length(dpos)-200)*10) 
 
 class RetreatGoal(Goal):
     def __init__(self, entity):
@@ -155,6 +217,13 @@ class Nenemy(Spaceship):
         Nenemy._uid += 1
         self.force = glm.vec2()
 
+    def defendShip(self,ship:Spaceship,p_rad:float,map:MapType,game:"Game"):
+        assert ship.team is self.team
+        self._goal = ProtectGoal(self,ship,p_rad)
+        self.goal = Goal.PROTECT
+        self._goal.reload(map,game)
+
+
     def update(self, map, dt, game:"Game"):
         if game.frame % Nenemy.every == self.id % Nenemy.every:
             self.higher_order_processing(map,dt,game)
@@ -166,7 +235,6 @@ class Nenemy(Spaceship):
         super().update(map,dt,game)
         self.vel = expDecay(self.vel,glm.vec2(),4,dt)
 
-
     def moveRel(self,force:glm.vec2):
         self.force += force
 
@@ -174,11 +242,13 @@ class Nenemy(Spaceship):
         if self._goal is None: 
             self.goal = Goal.WANDER
             self._goal = Wander(self)
-            dprint('Goal Changed to Wander')
+            # dprint('Goal Changed to Wander')
+        if self.goal is Goal.PROTECT:
+            pass
         if self.hp/self.hp_max < 0.2 and self.goal != Goal.RETREAT:
             self.goal = Goal.RETREAT
             self._goal = RetreatGoal(self)
-            dprint('changin to retreat goal')
+            # dprint('changin to retreat goal')
         elif self.goal is Goal.WANDER:
             big_rect = pygame.Rect(0,0,500,500)
             big_rect.center = self.pos
@@ -186,27 +256,34 @@ class Nenemy(Spaceship):
                 if ent is self: continue
                 if isinstance(ent,Spaceship):
                     if ent.team is not self.team:
-                        dprint('Goal Changed to Attack')
+                        # dprint('Goal Changed to Attack')
                         self.goal = Goal.ATTACK
                         self._goal = AttackGoal(self,ent)
+        else:
+            if 5 > 6:
+                self._goal = ProtectGoal() #type: ignore
         self._goal.reload(map,game)
 
 class Mothership(Nenemy):
     def __init__(self, pos, rot):
         super().__init__(glm.vec2(pos), rot,100,pygame.image.load('Images/TeamB/1.png'))
-        self.spawn_speed = 20
+        self.spawn_speed = 10
         self.t_next_spawn = 0
         self.spawn_cap = 75
-        self.spawns:list[Spaceship] = []
+        self.spawns:list[Nenemy] = []
 
     def spawnShip(self,game:"Game"):
-        new_ship = enemyFactory('basic',self.pos,self.rot)
+        new_ship = enemyFactory('basic',glm.circularRand(300)+self.pos,self.rot)
         self.spawns.append(new_ship)
         game.entities.append(new_ship)
         if type(self._goal) is not MotherShipSpawnGoal:
             print(self._goal)
 
     def higher_order_processing(self, map, dt, game:"Game"):
+        if self.hp/self.hp_max <= 0.5 and self.goal is not Goal.M_PANIC:
+            self.goal = Goal.M_PANIC
+            self._goal = MotherShipPanicGoal(self)
+            print('mothership panicking')
         if self._goal is None:
             self.goal = Goal.M_SPAWN
             self._goal = MotherShipSpawnGoal(self)
