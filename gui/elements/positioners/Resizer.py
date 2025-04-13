@@ -1,4 +1,7 @@
 from ...core import *
+from ...core_elements import *
+
+
 class Resizer:
   @classmethod
   def fill(cls,obj:types.HasRect|types.HasFullRect):
@@ -84,7 +87,7 @@ class Resizer:
     t = self.toPixels(self.top.replace('h',str(size[1])).replace('w',str(size[0])),size[1])
     w = max(self.toPixels(self.right.replace('~',str(l)).replace('h',str(size[1])).replace('w',str(size[0])),size[0]) - l,0) 
     h = max(self.toPixels(self.bottom.replace('~',str(t)).replace('h',str(size[1])).replace('w',str(size[0])),size[1]) - t,0)
-    if isinstance(self.obj,Space):
+    if isinstance(self.obj, Space):
       newSpace = Space(Rect(l,t,w,h))
       self.update = newSpace.update #the update method that is cached must be redirected to point to the new object
       self.obj.resized(newSpace)

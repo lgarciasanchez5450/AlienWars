@@ -15,6 +15,8 @@ class Slider(DrawBase):
     self.pactive = False
     self.mouse_active = False
  
+  def onResize(self,size:tuple[int,int]):
+    self.sliderx  = self.rect.width * self.value
   def onActivate(self): ...
   def onDeactivate(self): ...
 
@@ -29,6 +31,7 @@ class Slider(DrawBase):
     self.sliderx = self.rect.width*x
     self.value = x
     self.save_function(self.value)
+    return self
 
   def update(self,input:Input):
     mpos,mb1down,mb1up = input.mpos,input.mb1d,input.mb1u

@@ -118,6 +118,7 @@ class Game:
 
 class MainMenu:
     def __init__(self):
+        pygame.mixer_music.set_volume(0.5)
         cs = gui.ColorScheme(100,100,100)
         self.layer = gui.Layer(window.size)
         self.layer.space.addObjects(
@@ -133,17 +134,51 @@ class MainMenu:
                 alpha=200
             ),
             gui.ui.WithAlpha(
-
-            gui.ui.positioners.Aligner(
-                gui.ui.AddText(
-                    gui.ui.Button((0,55-25),(100,50),cs,self.quit),
-                    'Quit','white',pygame.font.SysFont('Arial',20)
+                gui.ui.positioners.Aligner(
+                    gui.ui.AddText(
+                        gui.ui.Button((0,55-25),(100,50),cs,None,self.goToSettings),
+                        'Settings','white',pygame.font.SysFont('Arial',20)
+                    ),
+                    0.5,0.5
                 ),
-                0.5,0.5
+            alpha=200
             ),
+            gui.ui.WithAlpha(
+                gui.ui.positioners.Aligner(
+                    gui.ui.AddText(
+                        gui.ui.Button((0,2*55-25),(100,50),cs,self.quit),
+                        'Quit','white',pygame.font.SysFont('Arial',20)
+                    ),
+                    0.5,0.5
+                ),
             alpha=200
             )
         )
+
+        self.settings_layer = gui.Layer(window.size)
+        self.settings_layer.space.addObjects(
+            gui.ui.Image((-50,-50),pygame.transform.scale_by(pygame.image.load('./Images/T8g30s.png'),2)),
+            gui.ui.positioners.Resizer(
+                a:=gui.ui.Slider((0,0),(100,20),gui.ColorLayout((255,255,255),(50,50,50)),pygame.mixer.music.set_volume).setValue(pygame.mixer_music.get_volume()),
+                '20%','50%','80%','~+20'
+            ),
+            gui.ui.positioners.WithRespectTo(
+                gui.ui.Text((0,-20),'Volume','white',pygame.font.SysFont('Arial',20)),
+                a,0.5,0.5
+            ),
+            gui.ui.positioners.Resizer(
+                gui.ui.AddText(
+                    gui.ui.Button((0,-20),(1,1),cs,None,self.goToMain),
+                    'Back',(255,255,255),pygame.font.SysFont('Arial',20)
+                ),
+                '0','0','~+60','~+60'
+            )
+        )
+    
+    def goToSettings(self):
+        self.cur_layer = self.settings_layer
+    def goToMain(self):
+        self.cur_layer = self.layer
 
     def toGame(self):
         self.running = False
@@ -153,16 +188,16 @@ class MainMenu:
 
     def run(self):
         self.running = True
+        self.cur_layer = self.layer
         while self.running:
             inp = gui.utils.getInput()
             if inp.quitEvent:
                 sys.exit()
-            self.layer.update(inp)
-            self.layer.draw(screen)
+            self.cur_layer.update(inp)
+            self.cur_layer.draw(screen)
             window.flip()
             dt = clock.tick(60) 
-            # self.quit()
-            self.dt  = dt/ 1000
+            self.dt  = dt / 1000
 
 
 if __name__=='__main__':
