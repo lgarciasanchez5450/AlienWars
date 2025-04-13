@@ -40,15 +40,20 @@ from ChunkManager import *
 """ STARTS HERE                    """
 
 asteroid_img = pygame.image.load('./Images/Hazards/asteroid.png')
+chicken_jockey_img = pygame.image.load('./Images/ChickenJockey/chicken_jockey.png')
 
 class Asteroid(Entity):
     def __init__(self,pos,rot,img:pygame.Surface):
         super().__init__(pos, rot)
         self.pos = pos
         self.rot = rot
-        self.vel.x = glm.cos(random.uniform(0.0, 1.0))
-        self.vel.y = glm.sin(random.uniform(0.0, 1.0))
-        self._surf = asteroid_img.convert_alpha()
+
+        angle = random.uniform(0, 2 * pi)
+        speed = random.uniform(50, 150)
+        self.vel.x = glm.cos(angle) * speed
+        self.vel.y = glm.sin(angle) * speed
+
+        self._surf = img.convert_alpha()
         self.rect = self._surf.get_rect()
         self.to_die = False
     
@@ -61,6 +66,9 @@ class Asteroid(Entity):
             self.dead = True
             children = 4
             t_offset = random.random()*2*pi
+            print(min(self._surf.get_size()))
+            if min(self._surf.get_size()) <= 48:
+                return
             for i in range(children):
                 theta = i*2*pi/children + t_offset
                 dir = glm.vec2(glm.cos(theta),glm.sin(theta))
@@ -71,7 +79,17 @@ class Asteroid(Entity):
     def onCollide(self, other):
         if isinstance(other,Bullet):
             self.to_die = True
+        elif isinstance(other,Asteroid):
+            self.vel = self.pos - other.pos
+            
 
+            
+
+            
+
+class ChickenJockey(Asteroid):
+    def __init__(self,pos,rot,img:pygame.Surface):
+        super().__init__(pos, rot, img)
 
 class Game:
     def __init__(self):
@@ -102,6 +120,7 @@ class Game:
 
     def run(self):
         self.startScene
+        asteroid_time_counter = 3
         while True:
             t_start = time.perf_counter()
             self.time = time.perf_counter()
@@ -117,8 +136,15 @@ class Game:
                         self.entities.append(
                             enemyFactory('mothership',self.player.pos+glm.circularRand(100),glm.linearRand(2,2*pi))
                         )
-                    if event.key == pygame.K_a:
-                        self.spawnEntity(Asteroid(glm.vec2(0,0), pi/2, asteroid_img))
+                    if event.key == pygame.K_c:
+                        self.spawnEntity(ChickenJockey(self.player.pos+glm.circularRand(200), 1, chicken_jockey_img))
+                        chicken_jockey_sound = pygame.mixer.Sound('./music/chicken_jockey_sound.mp3')
+                        chicken_jockey_sound.play()
+
+            asteroid_time_counter -= self.dt
+            if asteroid_time_counter <= 0:
+                self.spawnEntity(Asteroid(self.player.pos+glm.circularRand(200), 1, asteroid_img))
+                asteroid_time_counter = 2
                     
             self.entities.extend(self.to_spawn)
             self.to_spawn.clear()
