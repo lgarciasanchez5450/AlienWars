@@ -95,8 +95,11 @@ class Game:
         if __debug__:
             f3_mode = False
             dbg_font = pygame.font.SysFont('Arial',18)
+
+            time_frame= False
         while True:
             t_start = time.perf_counter()
+
             self.time = time.perf_counter()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
