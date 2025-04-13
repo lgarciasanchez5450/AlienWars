@@ -19,7 +19,7 @@ if not __debug__:
 window = pygame.Window('GAME',(1280,720))
 screen = window.get_surface()
 
-FPS = 700
+FPS = 70
 
 bg_image = pygame.image.load('./Images/T8g30s.png')
 bg_image= pygame.transform.scale(bg_image,window.size).convert()

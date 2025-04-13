@@ -1,3 +1,7 @@
+""" THIS IS A TESTER FILE FOR ASTEROID CLASS!!!! """
+
+""" okay the only two classes actually used in this file are Asteroid and its child CHICKEN JOCKEY!!! """
+
 import sys
 import time
 import random
@@ -14,7 +18,7 @@ if not __debug__:
     def _(*args,**kwargs):...
     builtins.print = _
 
-window = pygame.Window('GAME',(900,600))
+window = pygame.Window('GAME',(1280,720))
 screen = window.get_surface()
 
 FPS = 70
@@ -138,7 +142,7 @@ class Game:
                         )
                     if event.key == pygame.K_c:
                         self.spawnEntity(ChickenJockey(self.player.pos+glm.circularRand(200), 1, chicken_jockey_img))
-                        chicken_jockey_sound = pygame.mixer.Sound('./music/chicken_jockey_sound.mp3')
+                        chicken_jockey_sound = pygame.mixer.Sound('./music/sfx/chicken_jockey_sound.mp3')
                         chicken_jockey_sound.play()
 
             asteroid_time_counter -= self.dt
