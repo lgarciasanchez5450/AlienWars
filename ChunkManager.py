@@ -67,8 +67,11 @@ class Bullet(Entity):
         if self.t < 0: self.dead = True
         self.rect.center = self.pos
 
-    def onCollide(self, other):
-        # print('bullet colliding with',other)
+    def onCollide(self, other:"Entity"):
+        if hasattr(other,'spawn_speed'):
+            other.hp -= self.dmg
+            if other.hp <= 0:
+                other.dead = True
         self.dead = True
 class Attack:
     reload_time:float
@@ -99,7 +102,7 @@ class Spaceship(Entity):
             if self.hp <= 0:
                 self.dead = True
 
-CHUNK_SIZE = 100
+CHUNK_SIZE = 300
 BG_CHUNK_SIZE = CHUNK_SIZE*2
 
 def build_map(ships:list[Entity]):

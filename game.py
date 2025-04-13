@@ -135,11 +135,11 @@ class Game:
             screen.blit(surf,glm.floor(half_screen_size+(cpos[0]*BG_CHUNK_SIZE-self.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-self.camera_pos.y)))
         for e in physics.get_colliding(self.ent_draw_rect,map):
             from Nenemy import Mothership
-            if type(e) is Mothership:
-                s_= pygame.Surface(e.mask.get_size(),pygame.SRCALPHA)
-                pygame.draw.polygon(s_,(200,150,150),e.mask.outline(),0)
-                pygame.draw.rect(screen,'blue',e.rect.move(-self.camera_pos+half_screen_size))
-                screen.blit(pygame.transform.rotate(s_,e.rot),e.pos-self.camera_pos+half_screen_size-glm.vec2(s_.get_size())//2)
+            # if type(e) is Mothership:
+            #     s_= pygame.Surface(e.mask.get_size(),pygame.SRCALPHA)
+            #     pygame.draw.polygon(s_,(200,150,150),e.mask.outline(),0)
+            #     pygame.draw.rect(screen,'blue',e.rect.move(-self.camera_pos+half_screen_size))
+            #     screen.blit(pygame.transform.rotate(s_,e.rot),e.pos-self.camera_pos+half_screen_size-glm.vec2(s_.get_size())//2)
                 
             surf = e.surf
             screen.blit(surf,e.pos-self.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)

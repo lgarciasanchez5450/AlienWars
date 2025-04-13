@@ -305,11 +305,7 @@ class Mothership(Nenemy):
         return super().update(map, dt, game)
 
     def onCollide(self, other):
-        print(other)
-        if isinstance(other,Bullet):
-            self.hp -= other.dmg
-            if self.hp <= 0:
-                self.dead = True
+        pass
 type enemytype = typing.Literal['basic','mothership']
 
 def enemyFactory(type:enemytype,pos:glm.vec2,rot):
