@@ -285,13 +285,10 @@ class Mothership(Nenemy):
         self.spawns:list[Nenemy] = []
         self.start_spawn_count = 10
 
-
     def spawnShip(self,game:"Game"):
         new_ship = enemyFactory('basic',glm.circularRand(300)+self.pos,self.rot)
         self.spawns.append(new_ship)
         game.spawnEntity(new_ship)
-        if type(self._goal) is not MotherShipSpawnGoal:
-            print(self._goal)
 
     def higher_order_processing(self, map, dt, game:"Game"):
         if self.hp/self.hp_max <= 0.5 and self.goal is not Goal.M_PANIC:

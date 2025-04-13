@@ -34,7 +34,6 @@ class Entity:
     
     def update(self,map:MapType,dt:float,game:"Game"):
         self.rect.center = self.pos
-        
     
     def regenerate_physics(self):
         self.surf = pygame.transform.rotate(self._surf,self.rot*RAD_TO_DEG)
