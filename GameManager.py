@@ -11,6 +11,7 @@ class GameManager:
         self.game = game
         self.window = window
         self.asteroid_time_counter = 2
+        self.screen = self.window.get_surface()
     
     def start_game(self):
         pass
@@ -26,8 +27,29 @@ class GameManager:
         if self.asteroid_time_counter <= 0:
             self.game.spawnEntity(Asteroid(self.game.player.pos+glm.circularRand(200), 1, asteroid_img))
             self.asteroid_time_counter = 2
+        
+
 
     def post_update(self,map:MapType):
         pass
     def ui_draw(self):
-        pass
+        """ I need help fixing the progress bar, sorry """
+        # Create progress bar
+        progress_bar = pygame.Rect((0, 0, 800, 40))
+        progress_bar.center = (1280 // 2, 650)
+        pygame.draw.rect(self.screen, 'gray', progress_bar)
+
+        # Max width of the progress bar
+        MAX_FILL = 785  
+
+        # scale width based on kill count (value of 10 kills is full width)
+        current_width = min((self.game.kill_count / 20) * MAX_FILL, MAX_FILL)
+
+        if current_width >= MAX_FILL:
+            current_width = 0
+            self.game.kill_count = 0
+
+        # Create the filled progress bar
+        progress_bar_fill = pygame.Rect(progress_bar.left + 10, progress_bar.top + 6, current_width, 28)
+        pygame.draw.rect(self.screen, 'darkgreen', progress_bar_fill)
+

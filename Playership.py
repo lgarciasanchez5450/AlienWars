@@ -32,7 +32,7 @@ class Playership(ChunkManager.Spaceship):
 
         if keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0] == True:
             if self.atk_1.next_atk_time < game.time:
-                game.entities.append(self.atk_1.makeBullet(glm.vec2(self.pos)+40*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))
+                game.spawnEntity(self.atk_1.makeBullet(glm.vec2(self.pos)+40*glm.vec2(glm.cos(-self.rot),glm.sin(-self.rot)),self.vel,self.rot))
                 self.atk_1.resetAttackTime(game.time)
         # changing rotation based on cursor positioning 
         mouse_pos = pygame.mouse.get_pos()
