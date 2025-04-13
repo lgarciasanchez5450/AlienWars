@@ -98,6 +98,7 @@ class Spaceship(Entity):
                 self.dead = True
 
 CHUNK_SIZE = 100
+BG_CHUNK_SIZE = CHUNK_SIZE*2
 
 def build_map(ships:list[Entity]):
     #first hash everything

@@ -7,24 +7,22 @@ from Playership import Playership
 import physics
 from Nenemy import enemyFactory
 from Input import Input
-
+from background_image_generator import generate
+from gui.utils.utils import useCache
 import gui
 if not __debug__:
     import builtins
     def _(*args,**kwargs):...
     builtins.print = _
 
-window = pygame.Window('GAME',(900,600))
+window = pygame.Window('GAME',(900,600),)
 screen = window.get_surface()
 
-FPS = 70
+FPS = 700
 
 bg_image = pygame.image.load('./Images/T8g30s.png')
 bg_image = pygame.transform.scale_by(bg_image,5).convert()
 
-
-
-camera_pos = glm.vec2()
 
 
 half_screen_size = glm.vec2(window.size)/2
@@ -36,6 +34,7 @@ inp.camera_pos = glm.vec2()
 
 class Game:
     def __init__(self):
+        self.background = {}
         self.entities:list[Entity] = []
         self.clock = clock
         self.input = Input()
@@ -62,6 +61,8 @@ class Game:
         
     def run(self):
         self.startScene()
+        screen_rect = pygame.Rect(0,0,window.size[0]+1,window.size[1]+1)
+        ent_draw_rect = pygame.Rect(0,0,window.size[0]+1+CHUNK_SIZE,window.size[1]+1+CHUNK_SIZE)
         if __debug__:
             f3_mode = False
             dbg_font = pygame.font.SysFont('Arial',18)
@@ -93,16 +94,22 @@ class Game:
             for e in self.entities:
                 if e.dirty:
                     e.regenerate_physics()
+                    e.dirty = False
 
             #do physics
             physics.do_physics(self.entities,map)
             self.entities = list(filter(lambda x:not x.dead, self.entities))
             if __debug__:
-                screen.fill('black')
+                screen.fill('red')
             inp.camera_pos = self.player.pos
-            screen.blit(bg_image,-inp.camera_pos+half_screen_size-glm.vec2(bg_image.get_size())//2)
 
-            for e in self.entities:
+            screen_rect.center = inp.camera_pos
+            ent_draw_rect.center = inp.camera_pos
+            for cpos in physics.collide_chunks2d(screen_rect.left,screen_rect.top,screen_rect.right,screen_rect.bottom,BG_CHUNK_SIZE):
+                surf = useCache(generate,cpos,self.background)
+                screen.blit(surf,half_screen_size+(cpos[0]*BG_CHUNK_SIZE-inp.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-inp.camera_pos.y))
+            # screen.blit(bg_image,-inp.camera_pos+half_screen_size-glm.vec2(bg_image.get_size())//2)
+            for e in physics.get_colliding(ent_draw_rect,map):
                 surf = e.surf
                 screen.blit(surf,e.pos-inp.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
             if __debug__:
@@ -110,8 +117,9 @@ class Game:
                     screen.blit(dbg_font.render(f'{self.player.pos.x:.0f}/{self.player.pos.y:.0f}',True,'white'))
             t_end = time.perf_counter()
             window.flip()
+            t_final = time.perf_counter()
             dt = clock.tick(FPS) 
-            window.title = str(round(1000*(t_end-t_start),2))+'ms'
+            window.title = str(round(1000*(t_end-t_start),2))+'ms' + str(round(1000*(t_final-t_start),2)) + 'ms'
             self.dt  = dt/ 1000
             self.frame += 1
 
@@ -160,7 +168,7 @@ class MainMenu:
             gui.ui.Image((-50,-50),pygame.transform.scale_by(pygame.image.load('./Images/T8g30s.png'),2)),
             gui.ui.positioners.Resizer(
                 a:=gui.ui.Slider((0,0),(100,20),gui.ColorLayout((255,255,255),(50,50,50)),pygame.mixer.music.set_volume).setValue(pygame.mixer_music.get_volume()),
-                '20%','50%','80%','~+20'
+                '20%','50%','80%','~+30'
             ),
             gui.ui.positioners.WithRespectTo(
                 gui.ui.Text((0,-20),'Volume','white',pygame.font.SysFont('Arial',20)),
