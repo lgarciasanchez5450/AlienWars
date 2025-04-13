@@ -50,19 +50,21 @@ class Game:
         self.frame = 0
         self.to_spawn = []
 
-    
     def spawnEntity(self,entity:Entity):
         self.to_spawn.append(entity)
 
     def startScene(self):
-        enemy_mother = enemyFactory('mothership',MAP.midtop,-pi/2)
-        self.entities.append(enemy_mother)
-        for i in range(10):
-            enemy_mother.spawnShip(self)
+        # enemy_mother = enemyFactory('mothership',MAP.midtop,-pi/2)
+        # self.entities.append(enemy_mother)
+        # for i in range(10):
+        #     enemy_mother.spawnShip(self)
+        pass
         
-
     def run(self):
-        self.startScene
+        self.startScene()
+        if __debug__:
+            f3_mode = False
+            dbg_font = pygame.font.SysFont('Arial',18)
         while True:
             t_start = time.perf_counter()
             self.time = time.perf_counter()
@@ -74,10 +76,13 @@ class Game:
                         self.entities.append(
                             enemyFactory('basic',self.player.pos+glm.circularRand(200),glm.linearRand(0,2*pi))
                         )
-                    if event.key == pygame.K_m:
+                    elif event.key == pygame.K_m:
                         self.entities.append(
                             enemyFactory('mothership',self.player.pos+glm.circularRand(100),glm.linearRand(2,2*pi))
                         )
+                    if __debug__:
+                        if event.key == pygame.K_F3:
+                            f3_mode = True
             self.entities.extend(self.to_spawn)
             self.to_spawn.clear()
             map = build_map(self.entities)
@@ -92,15 +97,18 @@ class Game:
             #do physics
             physics.do_physics(self.entities,map)
             self.entities = list(filter(lambda x:not x.dead, self.entities))
-
+            if __debug__:
+                screen.fill('black')
             inp.camera_pos = self.player.pos
             screen.blit(bg_image,-inp.camera_pos+half_screen_size-glm.vec2(bg_image.get_size())//2)
 
             for e in self.entities:
                 surf = e.surf
                 screen.blit(surf,e.pos-inp.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
+            if __debug__:
+                if f3_mode:
+                    screen.blit(dbg_font.render(f'{self.player.pos.x:.0f}/{self.player.pos.y:.0f}',True,'white'))
             t_end = time.perf_counter()
-
             window.flip()
             dt = clock.tick(FPS) 
             window.title = str(round(1000*(t_end-t_start),2))+'ms'

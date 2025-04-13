@@ -4,6 +4,9 @@ import random
 img= pygame.image.load('./Images/nship.png')
 import physics
 
+def expDecay(a,b,decay:float,dt:float):
+  return b+(a-b)*math.exp(-decay*dt)
+
 def deltaAngle(a:float,b:float):
     d_rot = (a - b) %TWO_PI
     if d_rot > pi:
@@ -20,7 +23,7 @@ class Goal:
     ATTACK = 3
     M_SPAWN = 4
     M_TURTLE = 5
-    def __init__(self,entity:Spaceship):
+    def __init__(self,entity:'Nenemy'):
         self.entity = entity
     def update(self,map,game): ...
     def reload(self,map,game:"Game"): ...
@@ -47,7 +50,11 @@ class MotherShipSpawnGoal(Goal):
             self.entity.t_next_spawn = game.time + self.entity.spawn_speed
     
 class Wander(Goal):
-    def reload(self,map,game:"Game"): 
+    def __init__(self, entity):
+        super().__init__(entity)
+        self.target = None
+    def reload(self,map,game:"Game"):
+        if self.target: return 
         big_rect = pygame.Rect(0,0,300,300)
         big_rect.center = self.entity.pos
         self.around = [e for e in physics.get_colliding(big_rect,map) if e is not self.entity]
@@ -55,12 +62,17 @@ class Wander(Goal):
             random.random()*MAP.w,
             random.random()*MAP.h
         )
+        print(self.target,self.entity.pos,glm.distance(self.target,self.entity.pos))
         if (dst2:=glm.distance2(self.target,self.entity.pos)) > 100*100:
+            # print(glm.distance(self.target,self.entity.pos),end=' ')
+            # print(dst2, math.sqrt(dst2-100*100))
             #move target_closer 
             dst2 -= 100*100
-            self.target += (self.entity.pos - self.target) * math.sqrt(dst2)*0.7
+            self.target -= (self.target- self.entity.pos) *0.1
+            # print(glm.distance(self.target,self.entity.pos))
             
     def update(self,map,game:"Game"):
+        assert self.target
         dif = self.target - self.entity.pos
         target_rot = glm.atan(-dif.y,dif.x)
         d_rot = (target_rot - self.entity.rot) %TWO_PI
@@ -70,7 +82,11 @@ class Wander(Goal):
             self.entity.rot += d_rot * game.dt
             self.entity.dirty = True
         
-        # if d_rot/pi
+        m = glm.dot(glm.normalize(dif),glm.vec2(glm.cos(self.entity.rot),-glm.sin(self.entity.rot)))
+        m = max(0,m)*400
+        dist_to_target = glm.distance2(self.target,self.entity.pos)
+        self.entity.moveRel(glm.vec2(1,0)*m)
+        
 
 class AttackGoal(Goal):
     def __init__(self, entity,target:Spaceship):
@@ -136,14 +152,22 @@ class Nenemy(Spaceship):
         self._goal = None
         self.goal = Goal.WANDER
         Nenemy._uid += 1
+        self.force = glm.vec2()
 
     def update(self, map, dt, input:Input,game:"Game"):
         if game.frame % Nenemy.every == self.id:
             self.higher_order_processing(map,dt,input,game)
         elif self._goal:
             self._goal.update(map,game)
-      
+        self.vel += glm.rotate(self.force,-self.rot) * dt
+        self.force = glm.vec2()
+        self.pos += self.vel * dt
         super().update(map,dt,input,game)
+        self.vel = expDecay(self.vel,glm.vec2(),4,dt)
+
+
+    def moveRel(self,force:glm.vec2):
+        self.force += force
 
     def higher_order_processing(self,map:MapType,dt:float,input:Input,game:"Game"):
         if self._goal is None: 
@@ -155,7 +179,7 @@ class Nenemy(Spaceship):
             self._goal = RetreatGoal(self)
             dprint('changin to retreat goal')
         elif self.goal is Goal.WANDER:
-            big_rect = pygame.Rect(0,0,300,300)
+            big_rect = pygame.Rect(0,0,150,150)
             big_rect.center = self.pos
             for ent in physics.get_colliding(big_rect,map):
                 if ent is self: continue
@@ -168,7 +192,7 @@ class Nenemy(Spaceship):
 
 class Mothership(Nenemy):
     def __init__(self, pos, rot):
-        super().__init__(pos, rot,100,pygame.image.load('Images/TeamB/1.png'))
+        super().__init__(glm.vec2(pos), rot,100,pygame.image.load('Images/TeamB/1.png'))
         self.spawn_speed = 20
         self.t_next_spawn = 0
         self.spawn_cap = 75

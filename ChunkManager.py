@@ -1,4 +1,4 @@
-import glm
+from pyglm import glm
 import typing
 import pygame
 import math
@@ -33,6 +33,7 @@ class Entity:
     
     def update(self,map:MapType,dt:float,input:Input,game:"Game"):
         self.rect.center = self.pos
+        
     
     def regenerate_physics(self):
         self.surf = pygame.transform.rotate(self._surf,self.rot*RAD_TO_DEG)
@@ -79,7 +80,6 @@ class Attack:
 
 class Spaceship(Entity):
     team:str = 'A'
-    rot:float
     hp:float
     hp_max:float
     atk_1:Attack
@@ -104,6 +104,7 @@ def build_map(ships:list[Entity]):
     #first hash everything
     map:MapType = {}
     for ship in ships:
+        assert type(ship.pos) is glm.vec2, f'Ship:{ship}'
         cpos = glm.ivec2(ship.pos // CHUNK_SIZE).to_tuple()
         if cpos not in map:
             map[cpos] = [ship]
