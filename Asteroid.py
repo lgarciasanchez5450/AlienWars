@@ -3,12 +3,12 @@
 import random
 import pygame
 from ChunkManager import * 
-from Nenemy import enemyFactory
 from Input import Input
 
 from ChunkManager import *
 
 class Asteroid(Entity):
+    count_kill = True
     def __init__(self,pos,rot,img:pygame.Surface):
         super().__init__(pos, rot)
         self.pos = pos
@@ -19,11 +19,11 @@ class Asteroid(Entity):
         self.vel.x = glm.cos(angle) * speed
         self.vel.y = glm.sin(angle) * speed
 
-        self._surf = img.convert_alpha()
+        self._surf = img
         self.rect = self._surf.get_rect()
         self.to_die = False
     
-    def update(self,map:MapType,dt:float,input:Input,game:"Game"):
+    def update(self,map:MapType,dt:float,game:"Game"):
         self.rot += 1 * dt
         self.pos += self.vel * dt
         self.vel *= .995

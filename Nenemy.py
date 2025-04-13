@@ -154,22 +154,22 @@ class Nenemy(Spaceship):
         Nenemy._uid += 1
         self.force = glm.vec2()
 
-    def update(self, map, dt, input:Input,game:"Game"):
+    def update(self, map, dt, game:"Game"):
         if game.frame % Nenemy.every == self.id:
-            self.higher_order_processing(map,dt,input,game)
+            self.higher_order_processing(map,dt,game)
         elif self._goal:
             self._goal.update(map,game)
         self.vel += glm.rotate(self.force,-self.rot) * dt
         self.force = glm.vec2()
         self.pos += self.vel * dt
-        super().update(map,dt,input,game)
+        super().update(map,dt,game)
         self.vel = expDecay(self.vel,glm.vec2(),4,dt)
 
 
     def moveRel(self,force:glm.vec2):
         self.force += force
 
-    def higher_order_processing(self,map:MapType,dt:float,input:Input,game:"Game"):
+    def higher_order_processing(self,map:MapType,dt:float,game:"Game"):
         if self._goal is None: 
             self.goal = Goal.WANDER
             self._goal = Wander(self)
@@ -202,16 +202,21 @@ class Mothership(Nenemy):
         new_ship = enemyFactory('basic',self.pos,self.rot)
         self.spawns.append(new_ship)
         game.entities.append(new_ship)
+        if type(self._goal) is not MotherShipSpawnGoal:
+            print(self._goal)
 
-    def higher_order_processing(self, map, dt, input, game:"Game"):
+    def higher_order_processing(self, map, dt, game:"Game"):
         if self._goal is None:
             self.goal = Goal.M_SPAWN
             self._goal = MotherShipSpawnGoal(self)
         self._goal.reload(map,game)
+    
+    def update(self, map, dt, game:"Game"):
+        return super().update(map, dt, game)
 
 type enemytype = typing.Literal['basic','mothership']
 
-def enemyFactory(type:enemytype,pos,rot):
+def enemyFactory(type:enemytype,pos:glm.vec2,rot):
     if type == 'basic':
         emy = Nenemy(pos,rot)
         emy.atk_1 = BasicEnemyAttack()

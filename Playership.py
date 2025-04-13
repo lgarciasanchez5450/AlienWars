@@ -18,7 +18,7 @@ class Playership(ChunkManager.Spaceship):
         self.atk_1 = BasicEnemyAttack()
         self.atk_1.reload_time = 0.5
 
-    def update(self,map:ChunkManager.MapType, dt, input:Input,game:"ChunkManager.Game"):
+    def update(self,map:ChunkManager.MapType, dt,game:"ChunkManager.Game"):
         keys = pygame.key.get_pressed()
 
         # updating forwards and backwards + velocity movement
@@ -36,8 +36,8 @@ class Playership(ChunkManager.Spaceship):
                 self.atk_1.resetAttackTime(game.time)
         # changing rotation based on cursor positioning 
         mouse_pos = pygame.mouse.get_pos()
-        difference = input.toWorldCoords(mouse_pos) - self.pos 
+        difference = game.toWorldCoords(mouse_pos) - self.pos 
         # print(input.toWorldCoords(mouse_pos))
         self.rot = glm.atan(-difference.y, difference.x)
         self.dirty = True
-        super().update(map, dt, input, game)
+        super().update(map, dt, game)

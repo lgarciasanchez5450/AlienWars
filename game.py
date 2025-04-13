@@ -28,17 +28,14 @@ bg_image= pygame.transform.scale(bg_image,window.size).convert()
 
 
 half_screen_size = glm.vec2(window.size)/2
-dt = 0
-clock = pygame.time.Clock()
-inp = Input()
-inp.screen_size = glm.vec2(window.size)
-inp.camera_pos = glm.vec2()
 
 class Game:
     def __init__(self):
         self.background = {}
         self.entities:list[Entity] = []
-        self.clock = clock
+        self.clock = pygame.time.Clock()
+
+        self.camera_pos = glm.vec2()
         self.input = Input()
 
         self.player = Playership(
@@ -54,14 +51,18 @@ class Game:
     def spawnEntity(self,entity:Entity):
         self.to_spawn.append(entity)
 
-
-        
-    def run(self):
-        scene_manager = GameManager(self,window)
-        scene_manager.start_game()
-        screen_rect = pygame.Rect(0,0,window.size[0]+1,window.size[1]+1)
-        ent_draw_rect = pygame.Rect(0,0,window.size[0]+1+CHUNK_SIZE,window.size[1]+1+CHUNK_SIZE)
+    def toWorldCoords(self,screen_cords:glm.vec2):
+        return screen_cords + self.camera_pos - half_screen_size
+    
+    def start(self):
+        self.scene_manager = GameManager(self,window)
+        self.scene_manager.start_game()
+        self.screen_rect = pygame.Rect(0,0,window.size[0]+1,window.size[1]+1)
+        self.ent_draw_rect = pygame.Rect(0,0,window.size[0]+1+CHUNK_SIZE,window.size[1]+1+CHUNK_SIZE)
         self.kill_count = 0
+            
+    def run(self):
+
         if __debug__:
             f3_mode = False
             dbg_font = pygame.font.SysFont('Arial',18)
@@ -76,22 +77,18 @@ class Game:
                         self.entities.append(
                             enemyFactory('basic',self.player.pos+glm.circularRand(200),glm.linearRand(0,2*pi))
                         )
-                    elif event.key == pygame.K_m:
-                        self.entities.append(
-                            enemyFactory('mothership',self.player.pos+glm.circularRand(100),glm.linearRand(2,2*pi))
-                        )
                     if __debug__:
                         if event.key == pygame.K_F3:
                             f3_mode = True
             
+            self.scene_manager.pre_update()
             self.entities.extend(self.to_spawn)
             self.to_spawn.clear()
             map = build_map(self.entities)
-            scene_manager.pre_update(map)
             # update all entities
             for e in self.entities:
-                e.update(map, self.dt, inp,self)
-            scene_manager.post_update(map)
+                e.update(map, self.dt, self)
+            self.scene_manager.post_update(map)
 
             for e in self.entities:
                 if e.dirty:
@@ -100,21 +97,14 @@ class Game:
 
             #do physics
             physics.do_physics(self.entities,map)
+            #remove dead entities
             for i in range(len(self.entities)-1,-1,-1):
                 if self.entities[i].dead:
-                    del self.entities[i]
-                    self.kill_count+=1
-            inp.camera_pos = self.player.pos
-            screen_rect.center = inp.camera_pos
-            ent_draw_rect.center = inp.camera_pos
-            for cpos in physics.collide_chunks2d(screen_rect.left,screen_rect.top,screen_rect.right,screen_rect.bottom,BG_CHUNK_SIZE):
-                surf = useCache(generate,cpos,self.background)
-                screen.blit(surf,half_screen_size+(cpos[0]*BG_CHUNK_SIZE-inp.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-inp.camera_pos.y))
-            for e in physics.get_colliding(ent_draw_rect,map):
-                surf = e.surf
-                screen.blit(surf,e.pos-inp.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
-            scene_manager.ui_draw()
+                    if self.entities[i].count_kill:
+                        self.kill_count+=1
+                    del self.entities[i]    
 
+            self.draw(map)
             if __debug__:
                 if f3_mode:
                     screen.blit(dbg_font.render(f'{self.player.pos.x:.0f}/{self.player.pos.y:.0f}',True,'white'))
@@ -126,6 +116,17 @@ class Game:
             self.dt  = dt/ 1000
             self.frame += 1
 
+    def draw(self,map):
+        self.camera_pos = self.player.pos
+        self.screen_rect.center = self.camera_pos
+        self.ent_draw_rect.center = self.camera_pos
+        for cpos in physics.collide_chunks2d(self.screen_rect.left,self.screen_rect.top,self.screen_rect.right,self.screen_rect.bottom,BG_CHUNK_SIZE):
+            surf = useCache(generate,cpos,self.background)
+            screen.blit(surf,glm.floor(half_screen_size+(cpos[0]*BG_CHUNK_SIZE-self.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-self.camera_pos.y)))
+        for e in physics.get_colliding(self.ent_draw_rect,map):
+            surf = e.surf
+            screen.blit(surf,e.pos-self.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
+        self.scene_manager.ui_draw()
 
 class MainMenu:
     def __init__(self):
@@ -210,6 +211,7 @@ class MainMenu:
     def run(self):
         self.running = True
         self.cur_layer = self.layer
+        clock = pygame.time.Clock()
         while self.running:
             inp = gui.utils.getInput()
             if inp.quitEvent:
@@ -227,8 +229,47 @@ if __name__=='__main__':
     pygame.mixer_music.play()
     m = MainMenu()
     m.run()
+    transition_time = 1
+    l = gui.Layer(window.size)
+    l.space.addObjects(
+        black_scren:=gui.ui.WithAlpha(
+            gui.ui.ColorArea((0,0),window.size),
+        ),
+    )
+    volume = pygame.mixer.music.get_volume()
+    dt = 0
+    clock = pygame.Clock()
+    while transition_time > 0:
+        inp = gui.utils.getInput()
+        if inp.quitEvent:
+            sys.exit()
+        black_scren.setAlpha(255*max(1-transition_time/1,0))
+        pygame.mixer.music.set_volume(gui.utils.utils.lerp(volume,0,1-transition_time/1))
+
+        transition_time -= dt
+        m.cur_layer.update(inp)
+        m.cur_layer.draw(screen)
+        l.draw(screen)
+        window.flip()
+        dt = clock.tick(60) / 1000
+    
     pygame.mixer.music.unload()
     pygame.mixer.music.load('music/song 1.mp3')
     pygame.mixer_music.play()
+    transition_time =1
     g = Game()
+    g.start()
+    while transition_time > 0:
+        inp = gui.utils.getInput()
+        if inp.quitEvent:
+            sys.exit()
+        black_scren.setAlpha(255*transition_time/1)
+        pygame.mixer.music.set_volume(gui.utils.utils.lerp(volume,0,transition_time/1))
+        map = build_map(g.entities)
+        g.draw(map)
+        transition_time -= dt
+        l.draw(screen)
+        window.flip()
+        dt = clock.tick(60) / 1000
     g.run()
+    pygame.mixer.music.set_volume(volume)

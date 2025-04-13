@@ -15,6 +15,7 @@ MAP = pygame.Rect(0,0,10_000,10_000)
 type MapType = dict[tuple[int,int],list['Entity']]
 NULL_SURF = pygame.Surface((0,0))
 class Entity:
+    count_kill = False
     pos:glm.vec2 # current position 
     vel:glm.vec2 # current velocity
     rot:float
@@ -31,7 +32,7 @@ class Entity:
         self._surf = NULL_SURF
         self.dirty = True
     
-    def update(self,map:MapType,dt:float,input:Input,game:"Game"):
+    def update(self,map:MapType,dt:float,game:"Game"):
         self.rect.center = self.pos
         
     
@@ -54,13 +55,13 @@ class Bullet(Entity):
         self._surf.fill('red')
         self._surf.set_at((0,0),'black')
         self.t = 5
-        self.vel = self.dir *  200
+        self.vel = self.dir *  300
         self.rect = pygame.Rect()
     
     def regenerate_physics(self):
         super().regenerate_physics()
 
-    def update(self,map:MapType,dt:float,input:Input,game:"Game"):
+    def update(self,map:MapType,dt:float,game:"Game"):
         self.pos += self.vel * dt
         self.t -= dt
         if self.t < 0: self.dead = True
@@ -78,6 +79,7 @@ class Attack:
     def makeBullet(self,pos,bvel,rot) -> Bullet: ...
 
 class Spaceship(Entity):
+    count_kill = True
     team:str = 'A'
     hp:float
     hp_max:float
@@ -89,7 +91,7 @@ class Spaceship(Entity):
         self.hp = hp
         self.hp_max = hp
         self._surf = img
-        self.rect = self._surf.get_rect()
+        self.regenerate_physics()
 
     def onCollide(self, other):
         if isinstance(other,Bullet):
