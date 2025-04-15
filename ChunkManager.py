@@ -14,7 +14,7 @@ NULL_SURF = pygame.Surface((0,0))
 
 
 CHUNK_SIZE = 300
-BG_CHUNK_SIZE = CHUNK_SIZE*2
+BG_CHUNK_SIZE = CHUNK_SIZE * 2
 
 def build_map(entities:list[EntityType]):
     #first hash everything

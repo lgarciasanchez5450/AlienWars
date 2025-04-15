@@ -8,7 +8,7 @@ from math import pi
 from pyglm import glm
 
 
-class Asteroid(Entity):
+class Asteroid(EntityCachedPhysics):
     type = 'Asteroid'
     __slots__ = 'to_die',
     def __init__(self,pos,vel,rot,mass,img:Surface,tags:int):

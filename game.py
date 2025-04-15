@@ -76,13 +76,7 @@ class Game:
             PlayerController()
 
         )
-        # self.player = Playership(
-            
-        #     glm.vec2(),
-        #     pi/2,
-        #     pygame.image.load('./Images/TeamA/Ship/0.png').convert_alpha(),
-        #     30,'A'
-        # )
+
 
         self.entities.append(self.player)
         self.player.regenerate_physics()
@@ -173,12 +167,14 @@ class Game:
                 if time_frame:
                     time_f = time.perf_counter()
             if __debug__:
-                regen_physics_types = defaultdict(int)
+                regen_physics_by_type = defaultdict(float)
                 for e in self.entities:
-                    regen_physics_types[type(e)] += 1
                     if e.dirty:
+                        t_rstart = time.perf_counter()
                         e.regenerate_physics()
                         e.dirty = False
+                        t_rend = time.perf_counter()
+                        regen_physics_by_type[type(e)] += t_rend-t_rstart
             else:
                 for e in self.entities:
                     if e.dirty:
@@ -203,7 +199,7 @@ class Game:
             if __debug__:
                 if time_frame:
                     time_i = time.perf_counter()
-            self.draw(map)
+            self.draw(map,time_frame)
             if __debug__:
                 if time_frame:
                     time_j = time.perf_counter()
@@ -223,7 +219,7 @@ class Game:
                     print(f'\tClean Entities    {1000*(time_i-time_h):.2f} ms') #type: ignore
                     print(f'\tDraw              {1000*(time_j-time_i):.2f} ms') #type: ignore
                     print('Misc Data: ')
-                    print(f'\tMost Common Physics Regeneration:\n\t{[(c.__name__,n)for c,n in (Counter(regen_physics_types).most_common())]})')
+                    print(f'\tMost Common Physics Regeneration:\n\t{[f"{c.__name__}: {regen_physics_by_type[c]*1000:.2f} ms" for c,n in (Counter(regen_physics_by_type).most_common())]})')
                     import Nenemy
                     # print(f'\tSize of Global Entity Cache:',len(Nenemy.global_entity_physics_cache))
                     time_frame = False
@@ -235,17 +231,33 @@ class Game:
             self.dt  = dt/ 1000
             self.frame += 1
 
-    def draw(self,map):
+    def draw(self,map,time_draw:bool):
         self.camera_pos = self.player.pos
         self.screen_rect.center = self.camera_pos
         self.ent_draw_rect.center = self.camera_pos
+        if time_draw:
+            t_a = time.perf_counter()
+        i = 0
         for cpos in physics.collide_chunks2d(self.screen_rect.left,self.screen_rect.top,self.screen_rect.right,self.screen_rect.bottom,BG_CHUNK_SIZE):
             surf = useCache(generate,cpos,self.background)
+            i+=1
             screen.blit(surf,glm.floor(half_screen_size+(cpos[0]*BG_CHUNK_SIZE-self.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-self.camera_pos.y))) #type: ignore
+        if time_draw:
+            t_b = time.perf_counter()
+        es = 0
         for e in physics.get_colliding(self.ent_draw_rect,map):
+            es += 1
             surf = e.surf
             screen.blit(surf,e.pos-self.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
+        if time_draw:
+            t_c = time.perf_counter()
         self.scene_manager.ui_draw()
+        if time_draw:
+            t_d = time.perf_counter()    
+            print(f'Draw Time Breakdown (total {(t_d-t_a)*1000:.2f} ms)')
+            print(f'\tBackground:       {(t_b-t_a)*1000:.2f} ms ({i} Chunks)')
+            print(f'\tEntities:         {(t_c-t_b)*1000:.2f} ms ({es} Entities)')
+            print(f'\tUser Interface:   {(t_d-t_c)*1000:.2f} ms')
 
 class MainMenu:
     def __init__(self):

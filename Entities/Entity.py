@@ -46,3 +46,24 @@ class Entity:
         self.rect.center = self.pos
     
     def onCollide(self,other:"Entity"): ...
+
+
+class EntityCachedPhysics(Entity):
+    _global_physics_cache:dict[tuple[Surface,int],tuple[Surface,Mask]] = {}
+
+    def regenerate_physics(self):
+        degrees = self.rot*(180/3.141592653589793)
+        rot_hash = int(degrees) % 360
+        cache = EntityCachedPhysics._global_physics_cache
+        key = (self._surf,rot_hash)
+        if key not in cache:
+            surf = transform.rotate(self._surf,degrees)
+            mask_ = mask.from_surface(surf)
+            if len(cache) < 1000:
+                cache[key] = surf,mask_
+        else:
+            surf,mask_ = cache[key]
+        self.surf = surf
+        self.mask = mask_
+        self.rect = self.surf.get_rect()
+        self.rect.center = self.pos
