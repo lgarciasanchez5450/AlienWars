@@ -30,7 +30,6 @@ if action == 'clean':
     except:pass
     try:os.remove('game.spec')
     except:pass
-
 elif action == 'make':
     print('Building Executable (Pyinstaller)')
     proc = sp.run(['pyinstaller','game.py','--onefile','--optimize','2'],capture_output=True,text=True)

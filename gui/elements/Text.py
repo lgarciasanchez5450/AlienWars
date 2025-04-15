@@ -2,7 +2,7 @@ from ..core import *
 from pygame import font
 
 class Text(DrawBase):
-  def __init__(self,pos:tuple[int,int],text:str,color:types.ColorType,font:font.Font):
+  def __init__(self,pos:tuple[int,int],text:str,color:types.ColorType|str,font:font.Font):
     self.rect = Rect(pos,(0,0))
     self.font = font
     self.color = color

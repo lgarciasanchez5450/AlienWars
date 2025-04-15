@@ -3,7 +3,7 @@ from pygame import font
 
 class AddText(DrawBase):
   __slots__ = 'color','f','obj','anchor_x','anchor_y','alignment_x','alignment_y','offset_x','offset_y','update','_s','onResize','rect','txt','clip'
-  def __init__(self,obj:types.HasRect,text:str,color:types.ColorType,f:font.Font,anchor_x:float = 0.5,anchor_y:float = 0.5,
+  def __init__(self,obj:types.HasRect,text:str,color:types.ColorType|str,f:font.Font,anchor_x:float = 0.5,anchor_y:float = 0.5,
                                                                      alignment_x:float = 0.5,alignment_y:float = 0.5,
                                                                      offset_x:int = 0,offset_y:int = 0):
     self.color = color

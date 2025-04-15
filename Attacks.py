@@ -1,4 +1,15 @@
 from ChunkManager import *
+from gametypes import *
+from Entities.Bullet import Bullet
+
+
+class Attack:
+    reload_time:float
+    next_atk_time:float
+    bullet_power:int
+    def resetAttackTime(self,cur_time:float):
+        self.next_atk_time = cur_time + self.reload_time
+    def getBullets(self,pos,bvel,rot) -> list[EntityType]: ...
 
 #Here make a bunch of subclasses of Attack
 class BasicEnemyAttack(Attack):
@@ -7,8 +18,7 @@ class BasicEnemyAttack(Attack):
     bullet_power = 2
     
     def getBullets(self,pos,bvel,rot):
-        b = Bullet(pos,rot)
-        b.vel += bvel * 1.5
+        b = Bullet(pos,bvel * 1.5,rot)
         return [b]
 
 class Level2Attack(Attack):
@@ -17,8 +27,7 @@ class Level2Attack(Attack):
     bullet_power = 4
 
     def getBullets(self, pos, bvel, rot):
-        b = BlueBullet(pos, rot)
-        b.vel += bvel * 1.5
+        b = BlueBullet(pos,bvel*1.5, rot)
         b.dmg = self.bullet_power
         return [b]
     
@@ -69,17 +78,17 @@ class EightShotPassive(Attack):
             new_rot = rot+direction_angles[i]
             p_rot = rot+direction_angles[i]
             dir = glm.vec2(glm.cos(-p_rot), glm.sin(-p_rot))
-            new_bullet = BlueBullet(pos + 70 * dir,new_rot)
-            new_bullet.vel += bvel
+            new_bullet = Bullet(pos + 70 * dir,bvel,new_rot)
+            # new_bullet.vel += bvel
             bullets.append(new_bullet)
         return bullets
 
 
 # make subclasses for different Bullets
-
+import math
 class BlueBullet(Bullet):
-    def __init__(self, pos, rot):
-        super().__init__(pos, rot)
+    def __init__(self, pos, vel, rot):
+        super().__init__(pos, vel, rot)
         self.dir = glm.vec2(math.cos(rot),math.sin(-rot))
         self._surf = pygame.Surface((10,5))
         self._surf.set_colorkey('black')

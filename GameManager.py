@@ -1,15 +1,16 @@
 import typing
-from ChunkManager import *
+import pygame
+from Attacks import *
 from Nenemy import enemyFactory
 if typing.TYPE_CHECKING:
     from game import Game
-from Asteroid import Asteroid, ChickenJockey
+from Entities.Asteroid import Asteroid, ChickenJockey
 import random
-from Attacks import *
+from EntityTags import *
+import ResourceManager
 import time
 
-asteroid_img = pygame.image.load('./Images/Hazards/asteroid.png')
-chicken_jockey_img = pygame.image.load('./Images/ChickenJockey/chicken_jockey.png')
+
 pygame.font.init()
 main_font = pygame.font.Font('./font/Pixeltype.ttf', 50)
 
@@ -20,11 +21,12 @@ class GameManager:
         self.asteroid_time_counter = 2
         self.screen = self.window.get_surface()
 
-        global chicken_jockey_img
-        chicken_jockey_img =chicken_jockey_img.convert()
-        chicken_jockey_img.set_colorkey((255,255,255))
+        self.chicken_jockey_img = ResourceManager.loadOpaque('./Images/ChickenJockey/chicken_jockey.png')
+        self.chicken_jockey_img.set_colorkey((255,255,255))
+        self.asteroid_img = ResourceManager.loadAlpha('./Images/Hazards/asteroid.png')
+        pygame.init()
 
-        self.arrow = pygame.image.load('./Images/arrow.png').convert()
+        self.arrow = ResourceManager.loadOpaque('./Images/arrow.png')
         self.arrow.set_colorkey((0,0,0))
 
         self.level_up_sfx = pygame.Sound('./music/sfx/lvl_up.mp3')
@@ -39,7 +41,7 @@ class GameManager:
     def start_game(self):
         #spawn a bunch of random enemies 
         import random
-        for i in range(200):
+        for i in range(500):
             rx = random.randint(0,MAP.w)
             ry = random.randint(0,MAP.h)
             self.game.spawnEntity(enemyFactory('basic',glm.vec2(rx,ry),random.random()*2*pi))
@@ -47,14 +49,19 @@ class GameManager:
     def pre_update(self):
         keys = pygame.key.get_just_pressed()
         if keys[pygame.K_c]:
-            self.game.spawnEntity(ChickenJockey(self.game.player.pos+glm.circularRand(200), 1, chicken_jockey_img))
+            self.game.spawnEntity(ChickenJockey(self.game.player.pos+glm.circularRand(200),glm.circularRand(100),1, 1, self.chicken_jockey_img,E_CAN_BOUNCE))
             chicken_jockey_sound = pygame.mixer.Sound('./music/sfx/chicken_jockey_sound.mp3')
             chicken_jockey_sound.set_volume(pygame.mixer_music.get_volume())
             chicken_jockey_sound.play()
 
         self.asteroid_time_counter -= self.game.dt
         if self.asteroid_time_counter <= 0:
-            self.game.spawnEntity(Asteroid(self.game.player.pos+glm.circularRand(300), 1, asteroid_img.convert_alpha()))
+            self.game.spawnEntity(Asteroid(self.game.player.pos+glm.circularRand(300),
+                                           glm.circularRand(random.uniform(50, 150)),
+                                           random.random()*2*pi,
+                                           3,
+                                           self.asteroid_img,
+                                           E_CAN_BOUNCE))
             self.asteroid_time_counter = 5
 
         if self.game.kill_count >= self.kill_count_intervals[self.player_lvl]:
