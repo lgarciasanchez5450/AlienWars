@@ -21,10 +21,12 @@ class GameManager:
         self.asteroid_time_counter = 2
         self.screen = self.window.get_surface()
 
+        pygame.init()
         self.chicken_jockey_img = ResourceManager.loadOpaque('./Images/ChickenJockey/chicken_jockey.png')
         self.chicken_jockey_img.set_colorkey((255,255,255))
         self.asteroid_img = ResourceManager.loadAlpha('./Images/Hazards/asteroid.png')
-        pygame.init()
+        self.enemy_ship_img = pygame.transform.scale_by(ResourceManager.loadAlpha('./Images/TeamB/0.png'),1.75)
+
 
         self.arrow = ResourceManager.loadOpaque('./Images/arrow.png')
         self.arrow.set_colorkey((0,0,0))
@@ -40,11 +42,14 @@ class GameManager:
     
     def start_game(self):
         #spawn a bunch of random enemies 
+        from Entities.Spaceship import Spaceship
+        from Controllers.Controller import Controller
         import random
-        for i in range(500):
+        for i in range(1000):
             rx = random.randint(0,MAP.w)
             ry = random.randint(0,MAP.h)
-            self.game.spawnEntity(enemyFactory('basic',glm.vec2(rx,ry),random.random()*2*pi))
+            enemy = Spaceship(glm.vec2(rx,ry),glm.vec2(),random.random()*6.283,1,self.enemy_ship_img,E_CAN_BOUNCE,3,'B',Controller())
+            self.game.spawnEntity(enemy)
 
     def pre_update(self):
         keys = pygame.key.get_just_pressed()

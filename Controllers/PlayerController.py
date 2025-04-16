@@ -27,8 +27,12 @@ class PlayerController(Controller):
         if keys[pygame.K_SPACE] or mouse_pressed[0]:
             if entity.atk_1:
                 if entity.atk_1.next_atk_time < game.time:
-                    game.spawnEntities(entity.atk_1.getBullets(glm.vec2(entity.pos)+40*glm.vec2(glm.cos(-entity.rot),glm.sin(-entity.rot)),entity.vel,entity.rot))
+                    game.spawnEntities(entity.atk_1.getBullets(
+                        glm.vec2(entity.pos) +  entity.vel * game.dt +30*glm.vec2(glm.cos(-entity.rot),glm.sin(-entity.rot)),
+                        glm.vec2(entity.vel),
+                        entity.rot
+                    ))
                     entity.atk_1.resetAttackTime(game.time)
 
         entity.vel += glm.rotate(force,-entity.rot) * game.dt * 2
-        entity.n_vel = expDecay(entity.vel,glm.vec2(),1,game.dt)
+        entity.vel.xy = expDecay(entity.vel,glm.vec2(),2,game.dt)

@@ -1,41 +1,47 @@
 from pyglm import glm
 from pygame import Rect
+from pygame import Mask
 from gametypes import *
 from ChunkManager import CHUNK_SIZE
+class CollisionInfo:
+    mask:Mask
+    center_of_collision:glm.vec2
+    set_bits:int
+    __slots__ = 'mask','center_of_collision','set_bits'
 
+def calc_collision_map(map:MapType):
+    collisions:dict[frozenset,CollisionInfo] = {}
+    for chunk in map.values():
+        for entity in chunk:
+            _r = entity.rect
+            _cr = entity.rect.colliderect
+            _mo = entity.mask.overlap_mask
+            for other in chunk:
+                if other is entity: continue
+                if _cr(other.rect):
+                    fs = frozenset([entity,other])
+                    if fs in collisions: continue
+                    mask =_mo(other.mask,(other.rect.left-_r.left,other.rect.top-_r.top))
+                    set_bits = mask.count()
+                    if set_bits:
+                        info = CollisionInfo()
+                        info.mask = mask
+                        info.center_of_collision = glm.vec2(mask.centroid()) + entity.rect.topleft
+                        info.set_bits = set_bits
+                        entity.onCollide(other,info)
+                        other.onCollide(entity,info)
+                        collisions[fs] = info
 
-def do_physics(entities:list[EntityType],map:MapType):
-    for entity in entities:
-        cpos = glm.ivec2(entity.pos//CHUNK_SIZE).to_tuple()
-        surrounding = [
-            (cpos[0]-1,cpos[1]-1),
-            (cpos[0]+0,cpos[1]-1),
-            (cpos[0]+1,cpos[1]-1),
-            (cpos[0]-1,cpos[1]+0),
-            (cpos[0]+0,cpos[1]+0),
-            (cpos[0]+1,cpos[1]+0),
-            (cpos[0]-1,cpos[1]+1),
-            (cpos[0]+0,cpos[1]+1),
-            (cpos[0]+1,cpos[1]+1)
-        ]
-        _r = entity.rect
-        _cr = entity.rect.colliderect
-        _mo = entity.mask.overlap
-        for s_cpos in surrounding:
-            if ents:=map.get(s_cpos):
-                for other in ents:
-                    if other is entity: continue
-                    if _cr(other.rect):
-                        if _mo(other.mask,(other.rect.left-_r.left,other.rect.top-_r.top)):
-                            entity.onCollide(other)
 
 
 def get_colliding(r:Rect,map:MapType):
+    s = set()
     _cr = r.colliderect
     for cpos in collide_chunks2d(r.left,r.top,r.right,r.bottom,CHUNK_SIZE):
         if ents:=map.get(cpos):
             for other in ents:
-                if _cr(other.rect):
+                if other not in s and _cr(other.rect):
+                    s.add(other)
                     yield other
                     
 def collide_chunks2d(x1:float,y1:float,x2:float,y2:float,chunk_size:int): # type: ignore[same-name]

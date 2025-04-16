@@ -1,9 +1,9 @@
 from Entities.Entity import *
 from EntityTags import *
-from EntityTags import ICanDamage
+if __debug__:
+    from EntityTags import ICanDamage
 
 class Spaceship(Entity):
-    type = 'Spaceship'
     hp:float
     hp_max:float
     atk_1:AttackType|None
@@ -24,9 +24,10 @@ class Spaceship(Entity):
         self.controller.update(self,map,game)
         super().update(map, dt, game)
 
-    def onCollide(self, other:Entity):
+    def onCollide(self, other:Entity,info:CollisionInfo):
         if other.tags & E_CAN_DAMAGE:
             assert isinstance(other,ICanDamage)
             self.hp -= other.dmg
             if self.hp <= 0:
                 self.dead = True
+        super().onCollide(other,info)

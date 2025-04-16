@@ -1,22 +1,21 @@
 import gui
 import sys
 import time
-import random
 import pygame
-from ChunkManager import * 
+import random
 import physics
-from Nenemy import enemyFactory
-from background_image_generator import generate
-from gui.utils.utils import useCache
-from GameManager import GameManager
 from collections import defaultdict,Counter
-from Entities.Entity import Entity
-from EntityTags import *
 
-if not __debug__:
-    import builtins
-    def _(*args,**kwargs):...
-    builtins.print = _
+from EntityTags import *
+from ChunkManager import * 
+from Builder import Builder
+from Entities.Entity import Entity
+from GameManager import GameManager
+from Attacks import BasicEnemyAttack
+from gui.utils.utils import useCache
+from Entities.Spaceship import Spaceship
+from background_image_generator import generate
+from Controllers.PlayerController import PlayerController
 
 def formatBytes(b:int):
     i = 0
@@ -25,8 +24,9 @@ def formatBytes(b:int):
         b >>= 10
     return f'{b} {['B','KiB','MiB','GiB'][i]}'
 
-
-window = pygame.Window('GAME',(1280,720))
+# WINDOW_SIZE = 1280,720
+WINDOW_SIZE = 900,600
+window = pygame.Window('GAME',WINDOW_SIZE)
 screen = window.get_surface()
 
 FPS = 70
@@ -59,23 +59,25 @@ class Game:
     def __init__(self):
         self.background = {}
         self.entities:list[Entity] = []
+        self.assets = {}
         self.clock = pygame.time.Clock()
+        self.builder = Builder()
+        self.builder.buildEnemy(glm.vec2(),glm.vec2(),None,'A',1,**self.builder.fighter)
 
         self.camera_pos = glm.vec2()
-        from Entities.Spaceship import Spaceship
-        from Controllers.PlayerController import PlayerController
         self.player = Spaceship(
             glm.vec2(MAP.centerx+random.randint(-500,500),MAP.centery+random.randint(-500,500)),
             glm.vec2(),
             pi/2,
-            10,
+            1,
             pygame.image.load('./Images/TeamA/Ship/0.png').convert_alpha(),
             E_IS_PLAYER|E_CAN_BOUNCE,
             30,
             'A',
             PlayerController()
-
         )
+        
+        self.player.atk_1 = BasicEnemyAttack()
 
 
         self.entities.append(self.player)
@@ -114,14 +116,12 @@ class Game:
                 if event.type == pygame.QUIT:
                     sys.exit(0)
                 if event.type == pygame.KEYDOWN: #TODO move some of this logic to player class and 
-
                     if event.mod& pygame.KMOD_CTRL:
                         if event.key == pygame.K_d:
                             self.player.hp = self.player.hp_max = 9999999
-
                     if __debug__:
                         if event.key == pygame.K_F3:
-                            f3_mode = True
+                            f3_mode = not f3_mode
                         if event.key == pygame.K_F4:
                             time_frame = True
                         if event.key == pygame.K_F5:
@@ -152,17 +152,17 @@ class Game:
             if __debug__:
                 if time_frame:
                     time_c = time.perf_counter()
-            map = build_map(self.entities)
+            better_map = build_map_better(self.entities)
             if __debug__:
                 if time_frame:
                     time_d = time.perf_counter()
             # update all entities
             for e in self.entities:
-                e.update(map, self.dt, self)
+                e.update(better_map, self.dt, self)
             if __debug__:
                 if time_frame:
                     time_e = time.perf_counter()
-            self.scene_manager.post_update(map)
+            self.scene_manager.post_update(better_map)
             if __debug__:
                 if time_frame:
                     time_f = time.perf_counter()
@@ -184,22 +184,19 @@ class Game:
                 if time_frame:
                     time_g = time.perf_counter()
             #do physics
-            physics.do_physics(self.entities,map)
+            physics.calc_collision_map(better_map)
             if __debug__:
                 if time_frame:
                     time_h = time.perf_counter()
             #remove dead entities
             for i in range(len(self.entities)-1,-1,-1):
                 if self.entities[i].dead:
-                    if self.entities[i].type in {'Nenemy','Asteroid'}:
-                    # if self.entities[i].count_kill:
-                        self.kill_count+=1
+                    self.kill_count+=1  
                     del self.entities[i]    
-
             if __debug__:
                 if time_frame:
                     time_i = time.perf_counter()
-            self.draw(map,time_frame)
+            self.draw(better_map)
             if __debug__:
                 if time_frame:
                     time_j = time.perf_counter()
@@ -220,44 +217,32 @@ class Game:
                     print(f'\tDraw              {1000*(time_j-time_i):.2f} ms') #type: ignore
                     print('Misc Data: ')
                     print(f'\tMost Common Physics Regeneration:\n\t{[f"{c.__name__}: {regen_physics_by_type[c]*1000:.2f} ms" for c,n in (Counter(regen_physics_by_type).most_common())]})')
-                    import Nenemy
-                    # print(f'\tSize of Global Entity Cache:',len(Nenemy.global_entity_physics_cache))
+                    from Entities.Entity import EntityCachedPhysics
+                    print(f'\tSize of Global Entity Cache:',len(EntityCachedPhysics._global_physics_cache))
                     time_frame = False
             t_end = time.perf_counter()
             window.flip()
             t_final = time.perf_counter()
             dt = self.clock.tick(FPS) 
-            window.title = str(round(1000*(t_end-t_start),2))+'ms ' + str(round(1000*(t_final-t_start),2)) + 'ms'
-            self.dt  = dt/ 1000
+            window.title = str(round(1000*(t_end-t_start),2)).ljust(4)+' ms   ' + str(round(1000*(t_final-t_end),2)).ljust(4) + 'ms'
+            self.dt  = dt / 1000
             self.frame += 1
 
-    def draw(self,map,time_draw:bool):
+    def draw(self,map):
         self.camera_pos = self.player.pos
         self.screen_rect.center = self.camera_pos
         self.ent_draw_rect.center = self.camera_pos
-        if time_draw:
-            t_a = time.perf_counter()
         i = 0
         for cpos in physics.collide_chunks2d(self.screen_rect.left,self.screen_rect.top,self.screen_rect.right,self.screen_rect.bottom,BG_CHUNK_SIZE):
             surf = useCache(generate,cpos,self.background)
             i+=1
             screen.blit(surf,glm.floor(half_screen_size+(cpos[0]*BG_CHUNK_SIZE-self.camera_pos.x,cpos[1]*BG_CHUNK_SIZE-self.camera_pos.y))) #type: ignore
-        if time_draw:
-            t_b = time.perf_counter()
         es = 0
         for e in physics.get_colliding(self.ent_draw_rect,map):
             es += 1
             surf = e.surf
             screen.blit(surf,e.pos-self.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
-        if time_draw:
-            t_c = time.perf_counter()
         self.scene_manager.ui_draw()
-        if time_draw:
-            t_d = time.perf_counter()    
-            print(f'Draw Time Breakdown (total {(t_d-t_a)*1000:.2f} ms)')
-            print(f'\tBackground:       {(t_b-t_a)*1000:.2f} ms ({i} Chunks)')
-            print(f'\tEntities:         {(t_c-t_b)*1000:.2f} ms ({es} Entities)')
-            print(f'\tUser Interface:   {(t_d-t_c)*1000:.2f} ms')
 
 class MainMenu:
     def __init__(self):

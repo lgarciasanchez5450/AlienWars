@@ -8,8 +8,6 @@ import physics
 from Entities.Spaceship import Spaceship
 # global_entity_physics_cache:list[tuple[Surface,int],tuple[Surface,Mask]] = {}
 
-def expDecay(a,b,decay:float,dt:float):
-  return b+(a-b)*math.exp(-decay*dt)
 
 def deltaAngle(a:float,b:float):
     d_rot = (a - b) %TWO_PI

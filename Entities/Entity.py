@@ -5,11 +5,12 @@ from pygame import Rect
 
 from pygame import transform
 from pygame import mask
+from EntityTags import *
+
+from physics import CollisionInfo
 
 
 from gametypes import *
-
-
 
 class Entity:
     pos:glm.vec2 # current position 
@@ -23,16 +24,16 @@ class Entity:
     rect:Rect # bounding Rect of the surface
     mask:Mask # mask from surface
     tags:int
-    __slots__ = 'type','pos','vel','n_vel','rot','mass','surf','_surf','dirty','dead','rect','mask','tags'
+    __slots__ = 'pos','vel','n_vel','rot','mass','surf','_surf','dirty','dead','rect','mask','tags'
     def __init__(self,pos:glm.vec2,vel:glm.vec2,rot:float,mass:float,_surf:Surface,tags:int):
         self.pos = pos
         self.n_vel = self.vel = vel
         self.rot = rot
         self.mass = mass
         self._surf = _surf
+        self.tags = tags
         self.dirty = True
         self.dead = False
-        self.tags = tags
     
     def update(self,map:MapType,dt:float,game:GameType):
         self.vel = self.n_vel
@@ -45,7 +46,17 @@ class Entity:
         self.rect = self.surf.get_rect()
         self.rect.center = self.pos
     
-    def onCollide(self,other:"Entity"): ...
+    def onCollide(self,other:"Entity",info:CollisionInfo):
+        if other.tags & self.tags & E_CAN_BOUNCE:
+            rel_vel = self.vel - other.vel
+            d = self.pos - info.center_of_collision
+            dot = glm.dot(d,rel_vel)
+            if dot < 0:
+                d *= dot * 2/glm.length2(d) #type: ignore
+                self.n_vel = self.vel -  d * (other.mass / (self.mass+other.mass))
+            else:
+                self.vel += d * (other.mass / (self.mass+other.mass))
+
 
 
 class EntityCachedPhysics(Entity):

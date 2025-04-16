@@ -1,4 +1,6 @@
+from glm import vec2
 from ChunkManager import *
+from Entities.TimedEntity import Surface
 from gametypes import *
 from Entities.Bullet import Bullet
 
@@ -18,7 +20,7 @@ class BasicEnemyAttack(Attack):
     bullet_power = 2
     
     def getBullets(self,pos,bvel,rot):
-        b = Bullet(pos,bvel * 1.5,rot)
+        b = Bullet.makeDefault(pos,bvel,rot)
         return [b]
 
 class Level2Attack(Attack):
@@ -27,7 +29,7 @@ class Level2Attack(Attack):
     bullet_power = 4
 
     def getBullets(self, pos, bvel, rot):
-        b = BlueBullet(pos,bvel*1.5, rot)
+        b = Bullet.makeDefaultBlue(pos,bvel*1.5, rot)
         b.dmg = self.bullet_power
         return [b]
     
@@ -43,11 +45,9 @@ class Level3Attack(Attack):
             new_rot = rot+ direction_angles[i]
             p_rot = rot+direction_angles[i]*2
             dir = glm.vec2(glm.cos(-p_rot), glm.sin(-p_rot))
-            new_bullet = Bullet(pos + 15 * dir,new_rot)
-            new_bullet.vel += bvel * 1.5
+            new_bullet = Bullet.makeDefaultBlue(pos + 15 * dir,bvel,new_rot)
             bullets.append(new_bullet)
         return bullets
-    
 
 class Level4Attack(Attack):
     reload_time = 0.4
@@ -61,8 +61,8 @@ class Level4Attack(Attack):
             new_rot = rot+direction_angles[i]
             p_rot = rot+direction_angles[i]*2
             dir = glm.vec2(glm.cos(-p_rot), glm.sin(-p_rot))
-            new_bullet = BlueBullet(pos + 30 * dir,new_rot)
-            new_bullet.vel += bvel * 1.5
+            new_bullet = Bullet.makeDefaultBlue(pos + 30 * dir,bvel,new_rot)
+            # new_bullet.vel += bvel * 1.5
             bullets.append(new_bullet)
         return bullets
 
@@ -78,22 +78,9 @@ class EightShotPassive(Attack):
             new_rot = rot+direction_angles[i]
             p_rot = rot+direction_angles[i]
             dir = glm.vec2(glm.cos(-p_rot), glm.sin(-p_rot))
-            new_bullet = Bullet(pos + 70 * dir,bvel,new_rot)
+            new_bullet = Bullet.makeDefaultBlue(pos + 70 * dir,bvel,new_rot)
             # new_bullet.vel += bvel
             bullets.append(new_bullet)
         return bullets
 
 
-# make subclasses for different Bullets
-import math
-class BlueBullet(Bullet):
-    def __init__(self, pos, vel, rot):
-        super().__init__(pos, vel, rot)
-        self.dir = glm.vec2(math.cos(rot),math.sin(-rot))
-        self._surf = pygame.Surface((10,5))
-        self._surf.set_colorkey('black')
-        self._surf.fill('aqua')
-        self._surf.set_at((0,0),'black')
-        self.t = 5
-        self.vel = self.dir *  300
-        self.rect = pygame.Rect()

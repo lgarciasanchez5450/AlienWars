@@ -27,7 +27,7 @@ def generate(x:int,y:int) -> Surface:
     ]
     if not stars:loadStars()
     for cpos in s:
-        for star_x,star_y,star_index in get_stars(*cpos,1):
+        for star_x,star_y,star_index in get_stars(*cpos,20):
             star_surf= stars[star_index%len(stars)]
             surf.blit(star_surf,(star_x+(cpos[0]-x)*BG_CHUNK_SIZE,star_y+(cpos[1]-y)*BG_CHUNK_SIZE))
     if not MAP.colliderect(surf.get_rect(topleft=(x*BG_CHUNK_SIZE,y*BG_CHUNK_SIZE))):
