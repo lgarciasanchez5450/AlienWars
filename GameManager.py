@@ -5,10 +5,13 @@ from Nenemy import enemyFactory
 if typing.TYPE_CHECKING:
     from game import Game
 from Entities.Asteroid import Asteroid, ChickenJockey
+from Entities.Spaceship import Spaceship
+from Controllers.PlayerController import PlayerController
 import random
 from EntityTags import *
 import ResourceManager
 import time
+
 
 
 pygame.font.init()
@@ -18,18 +21,19 @@ class GameManager:
     def __init__(self,game:"Game",window:pygame.Window):
         self.game = game
         self.window = window
-        self.asteroid_time_counter = 2
+        self.asteroid_time_counter = 9999999999999
         self.screen = self.window.get_surface()
 
         pygame.init()
         self.chicken_jockey_img = ResourceManager.loadOpaque('./Images/ChickenJockey/chicken_jockey.png')
         self.chicken_jockey_img.set_colorkey((255,255,255))
         self.asteroid_img = ResourceManager.loadAlpha('./Images/Hazards/asteroid.png')
-        self.enemy_ship_img = pygame.transform.scale_by(ResourceManager.loadAlpha('./Images/TeamB/0.png'),1.75)
+        self.enemy_ship_img = ResourceManager.loadAlpha('./Images/TeamB/0.png')
 
 
         self.arrow = ResourceManager.loadOpaque('./Images/arrow.png')
         self.arrow.set_colorkey((0,0,0))
+        self.player_img_path = './Images/TeamA/Ship/0.png'
 
         self.level_up_sfx = pygame.Sound('./music/sfx/lvl_up.mp3')
         self.level_up_sfx.set_volume(pygame.mixer_music.get_volume())
@@ -39,29 +43,55 @@ class GameManager:
 
         self.mothership = None
         self.just_spawned = False
+
     
     def start_game(self):
+        #spawn player
+        self.player = Spaceship(
+            glm.vec2(50),
+            glm.vec2(),
+            pi/2,
+            8,
+            pygame.image.load(self.player_img_path).convert_alpha(),
+            E_IS_PLAYER|E_CAN_BOUNCE,
+            30,
+            'A',
+            [Gun((35,0),0,90)],
+            5000,
+            PlayerController(),
+        )
+
+        self.game.spawnEntity(self.player)
         #spawn a bunch of random enemies 
-        from Entities.Spaceship import Spaceship
-        from Controllers.Controller import Controller
-        import random
-        for i in range(1000):
-            rx = random.randint(0,MAP.w)
-            ry = random.randint(0,MAP.h)
-            enemy = Spaceship(glm.vec2(rx,ry),glm.vec2(),random.random()*6.283,1,self.enemy_ship_img,E_CAN_BOUNCE,3,'B',Controller())
-            self.game.spawnEntity(enemy)
+ 
+
+        # import random
+        # for i in range(500):
+        #     rx = random.randint(0,MAP.w)
+        #     ry = random.randint(0,MAP.h)
+        #     enemy = self.game.builder.buildEnemy(
+        #         glm.vec2(rx,ry),glm.vec2(),None,'B',**self.game.builder.fighter
+        #     )
+        #     self.game.spawnEntity(enemy)s
 
     def pre_update(self):
         keys = pygame.key.get_just_pressed()
         if keys[pygame.K_c]:
-            self.game.spawnEntity(ChickenJockey(self.game.player.pos+glm.circularRand(200),glm.circularRand(100),1, 1, self.chicken_jockey_img,E_CAN_BOUNCE))
+            self.game.spawnEntity(ChickenJockey(self.player.pos+glm.circularRand(200),glm.circularRand(100),1, 1, self.chicken_jockey_img,E_CAN_BOUNCE))
             chicken_jockey_sound = pygame.mixer.Sound('./music/sfx/chicken_jockey_sound.mp3')
             chicken_jockey_sound.set_volume(pygame.mixer_music.get_volume())
             chicken_jockey_sound.play()
-
+        if keys[pygame.K_1]:
+            self.game.spawnEntity(
+                self.game.builder.buildEnemy(self.player.pos + glm.circularRand(200),glm.vec2(),0,'B',**self.game.builder.warship)
+            )
+        if keys[pygame.K_2]:
+            self.game.spawnEntity(
+                self.game.builder.buildEnemy(self.player.pos + glm.circularRand(200),glm.vec2(),0,'B',**self.game.builder.fighter)
+            )
         self.asteroid_time_counter -= self.game.dt
         if self.asteroid_time_counter <= 0:
-            self.game.spawnEntity(Asteroid(self.game.player.pos+glm.circularRand(300),
+            self.game.spawnEntity(Asteroid(self.player.pos+glm.circularRand(300),
                                            glm.circularRand(random.uniform(50, 150)),
                                            random.random()*2*pi,
                                            3,
@@ -71,34 +101,35 @@ class GameManager:
 
         if self.game.kill_count >= self.kill_count_intervals[self.player_lvl]:
             self.player_lvl += 1
-            if self.player_lvl == 2:
-                self.spawnMothership()
-                self.game.player.atk_1 = Level2Attack()
-                self.game.player.hp = self.game.player.hp_max
-                self.level_up_sfx.play()
+            # if self.player_lvl == 2:
+            #     self.spawnMothership()
+            #     self.player.atk_1 = Level2Attack()
+            #     self.player.hp = self.player.hp_max
+            #     self.level_up_sfx.play()
+            # if self.player_lvl == 3:
+            #     self.spawnMothership()
+            #     self.player.atk_1 = Level3Attack()
+            #     self.player.hp = self.player.hp_max
+            #     self.level_up_sfx.play()
 
 
-            if self.player_lvl == 3:
-                self.spawnMothership()
-                self.game.player.atk_1 = Level3Attack()
-                self.game.player.hp = self.game.player.hp_max
-                self.level_up_sfx.play()
-
-
-            if self.player_lvl == 4:
-                self.spawnMothership()
-                self.game.player.atk_1 = Level4Attack()
-                self.game.player.hp = self.game.player.hp_max
-                self.level_up_sfx.play()
+            # if self.player_lvl == 4:
+            #     self.spawnMothership()
+            #     self.player.atk_1 = Level4Attack()
+            #     self.player.hp = self.player.hp_max
+            #     self.level_up_sfx.play()
 
             
-            if self.player_lvl == 5:
-                self.spawnMothership()
-                self.game.player.atk_1 = EightShotPassive()
-                self.game.player.hp = self.game.player.hp_max
-                self.level_up_sfx.play()
+            # if self.player_lvl == 5:
+            #     self.spawnMothership()
+            #     self.player.atk_1 = EightShotPassive()
+            #     self.player.hp = self.player.hp_max
+            #     self.level_up_sfx.play()
+
+    def post_update(self,map:MapType): ...
 
     def spawnMothership(self):
+        return
         self.mothership = enemyFactory('mothership',glm.vec2(MAP.centerx, random.random() * MAP.width), 0)
         self.game.spawnEntity(self.mothership)
         self.just_spawned = True
@@ -107,13 +138,13 @@ class GameManager:
         mothership_sound.play()
 
 
-    def post_update(self,map:MapType):
-        pass
+    def pre_draw(self):
+        self.game.camera_pos = self.player.pos
 
     def ui_draw(self):
         """ I need help fixing the progress bar, sorry """
         # Create progress bar
-        progress_bar = pygame.Rect((0, 0, 800, 30))
+        progress_bar = pygame.Rect(0, 0, 800, 30)
         progress_bar.center = (1280 // 2, 650)
         pygame.draw.rect(self.screen, 'gray', progress_bar)
         # Max width of the progress bar
@@ -133,7 +164,7 @@ class GameManager:
 
         #draw arrow
         if self.mothership and not self.mothership.dead:
-            dir = self.mothership.pos - self.game.player.pos
+            dir = self.mothership.pos - self.player.pos
             if glm.length(dir) > 700: 
                 arrow = pygame.transform.rotate(self.arrow,pygame.Vector2(dir).angle_to((1,0)))
                 pos = glm.vec2(self.screen.get_size())//2 + glm.normalize(dir)*500
@@ -147,7 +178,7 @@ class GameManager:
                     pos.y = self.screen.get_height()
                 self.screen.blit(arrow,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))
         
-        hp_surf = main_font.render('HP: ' + str(self.game.player.hp), False, 'White')
+        hp_surf = main_font.render('HP: ' + str(self.player.hp), False, 'White')
         hp_rect = hp_surf.get_rect(topleft = (15, 15))
         self.screen.blit(hp_surf, hp_rect)
 

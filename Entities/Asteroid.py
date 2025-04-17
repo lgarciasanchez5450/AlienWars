@@ -9,11 +9,12 @@ from pyglm import glm
 import ResourceManager
 
 
-class Asteroid(EntityCachedPhysics):
+class Asteroid(Entity):
     type = 'Asteroid'
     __slots__ = 'to_die',
     def __init__(self,pos,vel,rot,mass,img:Surface,tags:int):
         super().__init__(pos, vel,rot,mass,img,tags)
+        self.cache_every = 3
         self.to_die = False
     
     def update(self,map:MapType,dt:float,game:GameType):
@@ -40,10 +41,10 @@ class Asteroid(EntityCachedPhysics):
                             )
                 game.spawnEntity(a)
     
-    def onCollide(self, other:Entity,info:CollisionInfo):
+    def onCollide(self, other:Entity,info:CollisionInfo,normal:glm.vec2):
         if other.tags & E_CAN_DAMAGE:
             # assert isinstance(other,ICanDamage)
             self.to_die = True
-        super().onCollide(other,info)
+        super().onCollide(other,info,normal)
 class ChickenJockey(Asteroid):
     pass

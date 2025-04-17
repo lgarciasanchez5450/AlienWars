@@ -3,11 +3,14 @@ import pygame
 from pyglm import glm
 from Controllers.Controller import Controller
 from Entities.Spaceship import Spaceship
-from utils import expDecay
+from Entities.Bullet import Bullet
 
 class PlayerController(Controller):
     def init(self,entity:Spaceship):
-        pass
+        if entity.guns:
+            self.selected_gun = entity.guns[0]
+        else:
+            self.selected_gun = None
 
     def update(self,entity:Spaceship,map:MapType,game:GameType):
         keys = pygame.key.get_pressed()
@@ -15,9 +18,11 @@ class PlayerController(Controller):
         mouse_pos = pygame.mouse.get_pos()
 
         # updating forwards and backwards + velocity movement
-        force = glm.vec2(
-             (keys[pygame.K_w]) * 1000,
-             0
+        entity.move(
+            glm.vec2(
+                keys[pygame.K_w] - keys[pygame.K_s],
+                keys[pygame.K_d] - keys[pygame.K_a]
+            )
         )
         # changing rotation based on cursor positioning 
         difference = game.toWorldCoords(mouse_pos) - entity.pos 
@@ -25,14 +30,13 @@ class PlayerController(Controller):
         entity.dirty = True
 
         if keys[pygame.K_SPACE] or mouse_pressed[0]:
-            if entity.atk_1:
-                if entity.atk_1.next_atk_time < game.time:
-                    game.spawnEntities(entity.atk_1.getBullets(
-                        glm.vec2(entity.pos) +  entity.vel * game.dt +30*glm.vec2(glm.cos(-entity.rot),glm.sin(-entity.rot)),
+            if self.selected_gun and self.selected_gun.tryFire(game.time):
+                    pos = entity.pos + entity.vel * game.dt + \
+                        glm.rotate(self.selected_gun.pos,-entity.rot)
+                    bullet=Bullet.makeDefault(
+                        pos,
                         glm.vec2(entity.vel),
-                        entity.rot
-                    ))
-                    entity.atk_1.resetAttackTime(game.time)
-
-        entity.vel += glm.rotate(force,-entity.rot) * game.dt * 2
-        entity.vel.xy = expDecay(entity.vel,glm.vec2(),2,game.dt)
+                        entity.rot + self.selected_gun.rot,
+                        entity
+                    )
+                    game.spawnEntity(bullet)

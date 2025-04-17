@@ -10,9 +10,10 @@ if typing.TYPE_CHECKING:
     from game import Game
     from Attacks import Attack
     from Controllers.Controller import Controller
+    from pyglm import glm
 
 __all__ = [
-    'MapType','GameType','AttackType','EntityType','ControllerType'
+    'MapType','GameType','AttackType','EntityType','ControllerType','Vec2'
 ]
 
 
@@ -21,3 +22,4 @@ type GameType = 'Game'
 type AttackType = 'Attack'
 type EntityType = 'Entity'
 type ControllerType = 'Controller'
+type Vec2 = 'glm.vec2'

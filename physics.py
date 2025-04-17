@@ -16,20 +16,26 @@ def calc_collision_map(map:MapType):
             _r = entity.rect
             _cr = entity.rect.colliderect
             _mo = entity.mask.overlap_mask
+            _ma = entity.mask.overlap_area
             for other in chunk:
                 if other is entity: continue
                 if _cr(other.rect):
                     fs = frozenset([entity,other])
                     if fs in collisions: continue
-                    mask =_mo(other.mask,(other.rect.left-_r.left,other.rect.top-_r.top))
+                    x = other.rect.left - _r.left
+                    y = other.rect.top - _r.top
+                    mask =_mo(other.mask,(x,y))
                     set_bits = mask.count()
                     if set_bits:
+                        dx = _ma(other.mask, (x + 1, y)) - _ma(other.mask, (x - 1, y))
+                        dy = _ma(other.mask, (x, y + 1)) - _ma(other.mask, (x, y - 1))
+                        collision_normal = glm.vec2(dx,dy)
                         info = CollisionInfo()
                         info.mask = mask
                         info.center_of_collision = glm.vec2(mask.centroid()) + entity.rect.topleft
                         info.set_bits = set_bits
-                        entity.onCollide(other,info)
-                        other.onCollide(entity,info)
+                        entity.onCollide(other,info,collision_normal)
+                        other.onCollide(entity,info,-collision_normal)
                         collisions[fs] = info
 
 

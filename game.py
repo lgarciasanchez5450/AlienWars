@@ -11,11 +11,8 @@ from ChunkManager import *
 from Builder import Builder
 from Entities.Entity import Entity
 from GameManager import GameManager
-from Attacks import BasicEnemyAttack
 from gui.utils.utils import useCache
-from Entities.Spaceship import Spaceship
 from background_image_generator import generate
-from Controllers.PlayerController import PlayerController
 
 def formatBytes(b:int):
     i = 0
@@ -29,7 +26,7 @@ WINDOW_SIZE = 900,600
 window = pygame.Window('GAME',WINDOW_SIZE)
 screen = window.get_surface()
 
-FPS = 70
+FPS = 150
 
 type Coroutine[T] = typing.Generator[typing.Any,typing.Any,T]
 from collections import deque
@@ -62,26 +59,9 @@ class Game:
         self.assets = {}
         self.clock = pygame.time.Clock()
         self.builder = Builder()
-        self.builder.buildEnemy(glm.vec2(),glm.vec2(),None,'A',1,**self.builder.fighter)
 
         self.camera_pos = glm.vec2()
-        self.player = Spaceship(
-            glm.vec2(MAP.centerx+random.randint(-500,500),MAP.centery+random.randint(-500,500)),
-            glm.vec2(),
-            pi/2,
-            1,
-            pygame.image.load('./Images/TeamA/Ship/0.png').convert_alpha(),
-            E_IS_PLAYER|E_CAN_BOUNCE,
-            30,
-            'A',
-            PlayerController()
-        )
-        
-        self.player.atk_1 = BasicEnemyAttack()
 
-
-        self.entities.append(self.player)
-        self.player.regenerate_physics()
         self.dt = 0
         self.frame = 0
         self.to_spawn:list[Entity] = []
@@ -89,9 +69,16 @@ class Game:
         self.asyncCtx = AsyncContext()
 
     def spawnEntity(self,entity:Entity):
+        if entity.dirty:
+            entity.regenerate_physics()
+            entity.dirty = False
         self.to_spawn.append(entity)
-    
+
     def spawnEntities(self, entities:list[Entity]):
+        for entity in entities:
+            if entity.dirty:
+                entity.regenerate_physics()
+                entity.dirty = False
         self.to_spawn.extend(entities)
 
     def toWorldCoords(self,screen_cords:glm.vec2|tuple[int,int]):
@@ -116,9 +103,6 @@ class Game:
                 if event.type == pygame.QUIT:
                     sys.exit(0)
                 if event.type == pygame.KEYDOWN: #TODO move some of this logic to player class and 
-                    if event.mod& pygame.KMOD_CTRL:
-                        if event.key == pygame.K_d:
-                            self.player.hp = self.player.hp_max = 9999999
                     if __debug__:
                         if event.key == pygame.K_F3:
                             f3_mode = not f3_mode
@@ -126,15 +110,13 @@ class Game:
                             time_frame = True
                         if event.key == pygame.K_F5:
                             from pympler import asizeof
-                            mem_self,mem_enities,mem_bg,mem_player,mem_async = asizeof.asizesof(self, #type: ignore
+                            mem_self,mem_enities,mem_bg,mem_async = asizeof.asizesof(self, #type: ignore
                                                                                                 self.entities,
                                                                                                 self.background,
-                                                                                                self.player,
                                                                                                 self.asyncCtx)
                             print(f'Memory Breakdown (total {formatBytes(mem_self)})')
                             print(f'\tEntities      {formatBytes(mem_enities)}')
                             print(f'\tBackground    {formatBytes(mem_bg)}')
-                            print(f'\tPlayer        {formatBytes(mem_player)}')
                             print(f'\tAsync         {formatBytes(mem_async)}')
             if __debug__:
                 if time_frame:
@@ -144,10 +126,6 @@ class Game:
                 if time_frame:
                     time_b = time.perf_counter() 
             self.entities.extend(self.to_spawn)
-            for e in self.to_spawn:
-                if e.dirty:
-                    e.regenerate_physics()
-                    e.dirty = False
             self.to_spawn.clear()
             if __debug__:
                 if time_frame:
@@ -196,6 +174,7 @@ class Game:
             if __debug__:
                 if time_frame:
                     time_i = time.perf_counter()
+            self.scene_manager.pre_draw()
             self.draw(better_map)
             if __debug__:
                 if time_frame:
@@ -203,7 +182,7 @@ class Game:
             self.asyncCtx.update()
             if __debug__:
                 if f3_mode:
-                    screen.blit(dbg_font.render(f'{self.player.pos.x:.0f}/{self.player.pos.y:.0f}',True,'white'))
+                    screen.blit(dbg_font.render(f'{self.camera_pos.x:.0f}/{self.camera_pos.y:.0f}',True,'white'))
                 if time_frame:
                     print(f'Frame Time Breakdown: (total {1000*(time_h-time_a):.2f} ms)') #type: ignore
                     print(f'\tPre Update        {1000*(time_b-time_a):.2f} ms') #type: ignore
@@ -217,8 +196,7 @@ class Game:
                     print(f'\tDraw              {1000*(time_j-time_i):.2f} ms') #type: ignore
                     print('Misc Data: ')
                     print(f'\tMost Common Physics Regeneration:\n\t{[f"{c.__name__}: {regen_physics_by_type[c]*1000:.2f} ms" for c,n in (Counter(regen_physics_by_type).most_common())]})')
-                    from Entities.Entity import EntityCachedPhysics
-                    print(f'\tSize of Global Entity Cache:',len(EntityCachedPhysics._global_physics_cache))
+                    print(f'\tSize of Global Entity Cache:',len(Entity._global_physics_cache))
                     time_frame = False
             t_end = time.perf_counter()
             window.flip()
@@ -229,7 +207,6 @@ class Game:
             self.frame += 1
 
     def draw(self,map):
-        self.camera_pos = self.player.pos
         self.screen_rect.center = self.camera_pos
         self.ent_draw_rect.center = self.camera_pos
         i = 0

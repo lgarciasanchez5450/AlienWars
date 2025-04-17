@@ -6,10 +6,15 @@ from Entities.Asteroid import Asteroid
 from Entities.Bullet import Bullet
 from Entities.Entity import Entity
 from Entities.Spaceship import Spaceship
+from Attacks import Gun
 
 from Controllers.Controller import Controller
+from Controllers.FighterController import StateMachineController
+from Controllers.WarshipController import StateController
+from Controllers.WarshipController import StateAttack,StateIdle,StateAttackWithSpawn
 import ResourceManager
 from EntityTags import *
+
 
 _random = Random()
 class Builder:
@@ -19,28 +24,52 @@ class Builder:
             'mass':5,
             'tags':E_CAN_BOUNCE,
             'img':ResourceManager.loadAlpha('./Images/TeamB/0.png'),
-            'controllerType':Controller
+            'controller':StateController([StateIdle(),StateAttack()]),
+            'guns':[Gun((35,0),0,120)],
+            'engine_force':3000
         }
         self.scout = {
             'hp':3,
             'mass':2,
             'tags':E_CAN_BOUNCE,
             'img':ResourceManager.loadAlpha('./Images/TeamB/scout.png'),
-            'controllerType':Controller
+            'controller':Controller(),
+            'engine_force':3000,
+            'guns':[Gun((40,0),0,20)],
+
+
         }
         self.warship = {
             'hp':40,
-            'mass':15,
+            'mass':150,
             'tags':E_CAN_BOUNCE,
             'img':ResourceManager.loadAlpha('./Images/TeamB/warship.png'),
-            'controllerType':Controller
+            'controller':StateController([StateAttackWithSpawn(),StateIdle()]),
+            'guns':[Gun((70,30),0,500)],
+            'engine_force':2000,
+            'cache_every':0
         }
         self.mothership = {
             'hp':100,
             'mass':9999999,
             'tags':E_CAN_BOUNCE,
             'img':ResourceManager.loadColorKey('./Images/TeamB/warship.png',(255,255,255)),
-            'controllerType':Controller
+            'controller':Controller()
         }
-    def buildEnemy(self,pos:glm.vec2,vel:glm.vec2,rot:float|None,alliance:str,/,mass:float,img,tags:int,hp:int,controllerType:type[Controller]):
-        e = Spaceship(pos,vel,rot or _random.random()*2*pi,mass,img,tags,hp,alliance,controllerType())
+
+    def buildEnemy(self,pos:glm.vec2,vel:glm.vec2,rot:float|None,alliance:str,/,mass:float,img,tags:int,hp:int,guns:list[Gun],engine_force:float,controller:Controller,**kwargs):
+        ship = Spaceship(
+            pos,
+            vel,
+            rot if rot is not None else glm.linearRand(0,2*pi),
+            mass,
+            img,
+            tags,
+            hp,
+            alliance,
+            [g.copy() for g in guns],
+            engine_force,
+            controller.copy()
+        )
+        ship.cache_every = kwargs.get('cache_every',2)
+        return ship
