@@ -12,3 +12,4 @@ if __debug__:
     class ICanDamage(typing.Protocol):
         def __new__(cls): raise SyntaxError
         dmg:int
+        shooter:EntityType

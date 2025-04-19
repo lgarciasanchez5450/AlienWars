@@ -9,9 +9,9 @@ from Entities.Spaceship import Spaceship
 from Attacks import Gun
 
 from Controllers.Controller import Controller
-from Controllers.FighterController import StateMachineController
-from Controllers.WarshipController import StateController
-from Controllers.WarshipController import StateAttack,StateIdle,StateAttackWithSpawn
+from Controllers.StateController import StateController
+from Controllers.States import WarshipState
+from Controllers.States import FighterState
 import ResourceManager
 from EntityTags import *
 
@@ -24,7 +24,7 @@ class Builder:
             'mass':5,
             'tags':E_CAN_BOUNCE,
             'img':ResourceManager.loadAlpha('./Images/TeamB/0.png'),
-            'controller':StateController([StateIdle(),StateAttack()]),
+            'controller':StateController(FighterState.Wander(),None),
             'guns':[Gun((35,0),0,120)],
             'engine_force':3000
         }
@@ -44,7 +44,7 @@ class Builder:
             'mass':150,
             'tags':E_CAN_BOUNCE,
             'img':ResourceManager.loadAlpha('./Images/TeamB/warship.png'),
-            'controller':StateController([StateAttackWithSpawn(),StateIdle()]),
+            'controller':StateController(WarshipState.Idle(),WarshipState.SharedState()),
             'guns':[Gun((70,30),0,500)],
             'engine_force':2000,
             'cache_every':0

@@ -2,7 +2,7 @@ from pyglm import glm
 from pygame import Rect
 from pygame import Mask
 from gametypes import *
-from ChunkManager import CHUNK_SIZE
+import ChunkManager
 class CollisionInfo:
     mask:Mask
     center_of_collision:glm.vec2
@@ -14,7 +14,7 @@ def calc_collision_map(map:MapType):
     for chunk in map.values():
         for entity in chunk:
             _r = entity.rect
-            _cr = entity.rect.colliderect
+            _cr = _r.colliderect
             _mo = entity.mask.overlap_mask
             _ma = entity.mask.overlap_area
             for other in chunk:
@@ -43,7 +43,7 @@ def calc_collision_map(map:MapType):
 def get_colliding(r:Rect,map:MapType):
     s = set()
     _cr = r.colliderect
-    for cpos in collide_chunks2d(r.left,r.top,r.right,r.bottom,CHUNK_SIZE):
+    for cpos in collide_chunks2d(r.left,r.top,r.right,r.bottom,ChunkManager.CHUNK_SIZE):
         if ents:=map.get(cpos):
             for other in ents:
                 if other not in s and _cr(other.rect):
@@ -56,3 +56,23 @@ def collide_chunks2d(x1:float,y1:float,x2:float,y2:float,chunk_size:int): # type
     cx2 = (x2 / chunk_size).__ceil__()
     cy2 = (y2 / chunk_size).__ceil__()
     return [(x,y) for x in range(cx1,cx2,1) for y in range(cy1,cy2,1)]
+
+
+def linecast(origin:Vec2,dest:Vec2,map:MapType):
+    '''This implementation is incorrect: TODO Use Proper voxel traversal raycast algo'''
+    chunks_crossed = set()
+    dir = dest - origin
+    for i in range(200):
+        i /= 200
+        p = origin * (1-i) + dest * i
+        cpos = glm.ivec2(p // ChunkManager.CHUNK_SIZE).to_tuple()
+        if cpos in chunks_crossed: continue
+        chunks_crossed.add(cpos)
+        for entity in map.get(cpos,[]):
+            t_top = entity.rect.top / dir.y
+            t_bottom = entity.rect.bottom / dir.y
+            t_left = entity.rect.left / dir.x
+            t_right = entity.rect.right / dir.x
+
+
+    

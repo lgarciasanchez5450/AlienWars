@@ -21,8 +21,8 @@ def formatBytes(b:int):
         b >>= 10
     return f'{b} {['B','KiB','MiB','GiB'][i]}'
 
-# WINDOW_SIZE = 1280,720
-WINDOW_SIZE = 900,600
+WINDOW_SIZE = 1280,720
+# WINDOW_SIZE = 900,600
 window = pygame.Window('GAME',WINDOW_SIZE)
 screen = window.get_surface()
 
@@ -220,6 +220,7 @@ class Game:
             surf = e.surf
             screen.blit(surf,e.pos-self.camera_pos+half_screen_size-glm.vec2(surf.get_size())//2)
         self.scene_manager.ui_draw()
+
 
 class MainMenu:
     def __init__(self):

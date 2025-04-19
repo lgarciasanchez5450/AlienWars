@@ -8,18 +8,19 @@ import typing
 if typing.TYPE_CHECKING:
     from Entities.Entity import Entity
     from game import Game
-    from Attacks import Attack
+    from Attacks import Gun
     from Controllers.Controller import Controller
     from pyglm import glm
-
+    from physics import CollisionInfo
 __all__ = [
-    'MapType','GameType','AttackType','EntityType','ControllerType','Vec2'
+    'MapType','GameType','GunType','EntityType','ControllerType','Vec2','CollisionInfoType'
 ]
 
 
 type MapType = dict[tuple[int,int],list['Entity']]
 type GameType = 'Game'
-type AttackType = 'Attack'
+type GunType = 'Gun'
 type EntityType = 'Entity'
 type ControllerType = 'Controller'
 type Vec2 = 'glm.vec2'
+type CollisionInfoType = 'CollisionInfo'

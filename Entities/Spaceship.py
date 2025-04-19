@@ -8,8 +8,6 @@ if __debug__:
 class Spaceship(Entity):
     hp:float
     hp_max:float
-    atk_1:AttackType|None
-    atk_2:AttackType|None
     controller:ControllerType
     __slots__ = 'hp','hp_max','alliance','guns','controller','engine_force'
     def __init__(self, pos:glm.vec2, vel:glm.vec2, rot:float,mass:float, _surf:Surface,tags:int,hp:int,alliance:str,guns:list[Gun],engine_force:float,controller:ControllerType):
@@ -40,7 +38,7 @@ class Spaceship(Entity):
         self.vel *= glm.exp(-dt) #equivalent to vel = expDecay(vel,0,1,dt), inlined for speedup
 
     def onCollide(self, other:Entity,info:CollisionInfo,normal:glm.vec2):
-        self.controller.onCollide(self,other,normal)
+        self.controller.onCollide(self,other,info,normal)
         if other.tags & E_CAN_DAMAGE:
             assert isinstance(other,ICanDamage)
             self.hp -= other.dmg
