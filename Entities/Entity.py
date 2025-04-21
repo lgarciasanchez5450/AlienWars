@@ -73,7 +73,6 @@ class Entity:
         self.dir = glm.rotate(glm.vec2(1,0),-self.rot) #type: ignore
         self.rect.center = self.pos
 
-    
     def onCollide(self,other:"Entity",info:CollisionInfo,normal:glm.vec2):
         if other.tags & self.tags & E_CAN_BOUNCE:
             rel_vel = self.vel - other.vel
@@ -87,3 +86,5 @@ class Entity:
  
     def addRelForce(self,force:glm.vec2):
         self.force += force
+
+    def onDeath(self,map:MapType,dt:float,game:GameType): ...

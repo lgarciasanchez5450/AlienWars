@@ -56,16 +56,16 @@ class Game:
     def __init__(self):
         self.background = {}
         self.entities:list[Entity] = []
-        self.assets = {}
         self.clock = pygame.time.Clock()
         self.builder = Builder()
 
         self.camera_pos = glm.vec2()
+        self.explosion_sfx = pygame.mixer.Sound('./music/sfx/explosion.mp3')
+        self.explosion_sfx.set_volume(pygame.mixer_music.get_volume())
 
         self.dt = 0
         self.frame = 0
         self.to_spawn:list[Entity] = []
-
         self.asyncCtx = AsyncContext()
 
     def spawnEntity(self,entity:Entity):
@@ -169,6 +169,7 @@ class Game:
             #remove dead entities
             for i in range(len(self.entities)-1,-1,-1):
                 if self.entities[i].dead:
+                    self.entities[i].onDeath(map,dt,self)
                     self.kill_count+=1  
                     del self.entities[i]    
             if __debug__:
@@ -371,6 +372,8 @@ if __name__=='__main__':
         g.run()
         pygame.mixer.music.set_volume(volume)
     else:
+        pygame.init()
+        pygame.mixer_music.set_volume(0)
         g = Game()
         g.start()
         g.run()

@@ -1,4 +1,3 @@
-from Controllers.StateController import StateController
 from Entities.Spaceship import Spaceship
 from gametypes import *
 from Controllers.States.core import *
@@ -12,6 +11,7 @@ class Pursue(BaseAttack):
     def __init__(self):
         super().__init__()
         self.max_dist_from_parent = 3000
+        self.shoot_threshold = 0.9
 
     def start(self,parent:Spaceship,target:EntityType):
         super().start(target)
@@ -21,30 +21,7 @@ class Pursue(BaseAttack):
         if self.target.dead:
             controller.setState(Idle())
 
-    def update(self, controller: StateController, entity: Spaceship, map: MapType, game: GameType):
-        if self.target.dead:
-            return self.think(controller,entity,map,game)
-        dpos = self.target.pos - entity.pos
-        dist = glm.length(dpos)
-        d_rot = -utils.cross2d(entity.dir,dpos) / dist # type: ignore
-        dot = glm.dot(entity.dir,dpos) / dist
-        if abs(d_rot) > 0.05:
-            entity.rot += max(-1,min(d_rot,1)) * game.dt*game.dt * entity.engine_force / entity.mass 
-            entity.dirty = True
-        if dot > 0.8:
-            for gun in entity.guns:
-                if gun.canFire(game.time):
-                    import physics
-                    if physics.
-                    pos = entity.pos + entity.vel * game.dt + \
-                        glm.rotate(gun.pos,-entity.rot)
-                    bullet=Bullet.makeDefault(
-                        pos,
-                        glm.vec2(entity.vel),
-                        entity.rot + gun.rot,
-                        entity
-                    )
-                    game.spawnEntity(bullet)
+      
 class Idle(State):
     pass
  
@@ -69,7 +46,6 @@ class Orbit(State):
         if d_rot > pi:
             d_rot -= TWO_PI
         movement = glm.vec2(max(0.2,abs(dist-self.radius)*0.001),0)
-
         if d_rot:
             entity.rot += max(-1,min(d_rot,1)) * game.dt*game.dt * entity.engine_force / entity.mass 
             entity.dirty = True

@@ -45,7 +45,7 @@ class Builder:
             'tags':E_CAN_BOUNCE,
             'img':ResourceManager.loadAlpha('./Images/TeamB/warship.png'),
             'controller':StateController(WarshipState.Idle(),WarshipState.SharedState()),
-            'guns':[Gun((70,30),0,500)],
+            'guns':[Gun((80,30),0,30)],
             'engine_force':2000,
             'cache_every':0
         }

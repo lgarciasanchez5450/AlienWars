@@ -1,3 +1,4 @@
+import os
 import typing
 from pygame import Surface
 from pygame import image
@@ -7,6 +8,7 @@ from pygame import typing as pgtyping
 CACHE_MAX_SIZE = 400
 resources:dict[str,Surface] = {}
 transformations:dict[tuple[Surface,str],Surface] = {}
+r_dirs:dict[str,tuple[Surface,...]] = {}
 def load(path:str,*post_processing:typing.Callable[[Surface],Surface|None]) -> Surface:
     if (surf := resources.get(path)) is None:
         surf = image.load(path)
@@ -16,7 +18,17 @@ def load(path:str,*post_processing:typing.Callable[[Surface],Surface|None]) -> S
         assert len(resources) <= CACHE_MAX_SIZE,'Too Many Resources Loaded'
     return surf
 
-
+def loadDir(path:str,*post_processing:typing.Callable[[Surface],Surface|None]) -> list[Surface]:
+    if (surfs := r_dirs.get(path)) is None:
+        surfs = []
+        for name in os.listdir(path):
+            fqn = os.path.join(path,name)
+            surf = image.load(fqn)
+            for process in post_processing: 
+                surf = process(surf) or surf
+            surfs.append(surf)
+        r_dirs[path] = tuple(surfs)
+    return list(surfs)
 
 def loadAlpha(path:str) ->Surface:
     return load(path,Surface.convert_alpha)

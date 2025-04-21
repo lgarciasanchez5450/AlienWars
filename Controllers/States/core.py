@@ -11,7 +11,6 @@ if typing.TYPE_CHECKING:
 
 
 class State:
-    def __init_subclass__(cls): pass
     def start(self): ...
 
     def update(self,controller:'StateController',entity:Spaceship,map:MapType,game:GameType): ...
@@ -29,6 +28,7 @@ class BaseAttack(State):
     def __init__(self):
         self.optimal_distance = 300
         self.sight = 900
+        self.shoot_threshold = 0.8
         
     def start(self,target:EntityType):
         self.target = target
@@ -43,7 +43,7 @@ class BaseAttack(State):
         if abs(d_rot) > 0.05:
             entity.rot += max(-1,min(d_rot,1)) * game.dt*game.dt * entity.engine_force / entity.mass 
             entity.dirty = True
-        if dot > 0.8:
+        if dot > self.shoot_threshold:
             for gun in entity.guns:
                 if gun.tryFire(game.time):
                     pos = entity.pos + entity.vel * game.dt + \

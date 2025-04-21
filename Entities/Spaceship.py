@@ -30,6 +30,12 @@ class Spaceship(Entity):
         dir.y *= 0.1
         self.force += dir * self.engine_force
 
+    def moveOverDrive(self,dir:Vec2):
+        if dir.x < 0:
+            dir.x *= 0.1
+        dir.y *= 0.1
+        self.force += dir * self.engine_force * 100
+
     
 
     def update(self, map, dt, game):

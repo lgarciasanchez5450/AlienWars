@@ -61,7 +61,7 @@ def collide_chunks2d(x1:float,y1:float,x2:float,y2:float,chunk_size:int): # type
 def linecast(origin:Vec2,dest:Vec2,map:MapType):
     '''This implementation is incorrect: TODO Use Proper voxel traversal raycast algo'''
     chunks_crossed = set()
-    dir = dest - origin
+    
     for i in range(200):
         i /= 200
         p = origin * (1-i) + dest * i
@@ -69,10 +69,16 @@ def linecast(origin:Vec2,dest:Vec2,map:MapType):
         if cpos in chunks_crossed: continue
         chunks_crossed.add(cpos)
         for entity in map.get(cpos,[]):
-            t_top = entity.rect.top / dir.y
-            t_bottom = entity.rect.bottom / dir.y
-            t_left = entity.rect.left / dir.x
-            t_right = entity.rect.right / dir.x
-
-
+            raise NotImplementedError
     
+
+def collide_line_rect(origin:Vec2,dir:Vec2,rect:Rect):
+    if not dir.x: return rect.left < origin.x < rect.right
+    if not dir.y: return rect.top < origin.y < rect.bottom
+    
+    t_top = rect.top / dir.y
+    t_bottom = rect.bottom / dir.y
+    t_left = rect.left / dir.x
+    t_right = rect.right / dir.x
+
+    pass

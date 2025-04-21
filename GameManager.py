@@ -1,24 +1,23 @@
-import typing
+import time
 import pygame
+import random
+from math import pi
 from Attacks import *
+from gametypes import *
+from EntityTags import *
 from Nenemy import enemyFactory
-if typing.TYPE_CHECKING:
-    from game import Game
 from Entities.Asteroid import Asteroid, ChickenJockey
 from Entities.Spaceship import Spaceship
 from Controllers.PlayerController import PlayerController
-import random
-from EntityTags import *
 import ResourceManager
-import time
 
 
 
 pygame.font.init()
-main_font = pygame.font.Font('./font/Pixeltype.ttf', 50)
+main_font = pygame.font.Font('./font/Pixeltype.ttf', 26)
 
 class GameManager:
-    def __init__(self,game:"Game",window:pygame.Window):
+    def __init__(self,game:GameType,window:pygame.Window):
         self.game = game
         self.window = window
         self.asteroid_time_counter = 9999999999999
@@ -29,6 +28,8 @@ class GameManager:
         self.chicken_jockey_img.set_colorkey((255,255,255))
         self.asteroid_img = ResourceManager.loadAlpha('./Images/Hazards/asteroid.png')
         self.enemy_ship_img = ResourceManager.loadAlpha('./Images/TeamB/0.png')
+
+        self.atk_frame = ResourceManager.loadColorKey('./Images/attack_pics/basic_atk.png',(0,0,0))
 
 
         self.arrow = ResourceManager.loadOpaque('./Images/arrow.png')
@@ -44,6 +45,7 @@ class GameManager:
         self.mothership = None
         self.just_spawned = False
 
+
     
     def start_game(self):
         #spawn player
@@ -56,7 +58,7 @@ class GameManager:
             E_IS_PLAYER|E_CAN_BOUNCE,
             30,
             'A',
-            [Gun((35,0),0,90)],
+            [NamedGun((35,0),0,90,'Test_Name',self.atk_frame)],
             5000,
             PlayerController(),
         )
@@ -143,25 +145,6 @@ class GameManager:
 
     def ui_draw(self):
         """ I need help fixing the progress bar, sorry """
-        # Create progress bar
-        progress_bar = pygame.Rect(0, 0, 800, 30)
-        progress_bar.center = (1280 // 2, 650)
-        pygame.draw.rect(self.screen, 'gray', progress_bar)
-        # Max width of the progress bar
-        MAX_FILL = 785  
-
-        # scale width based on kill count (value of 10 kills is full width)
-        offset = self.kill_count_intervals[self.player_lvl-1]
-        current_width = min(((self.game.kill_count-offset) / (self.kill_count_intervals[self.player_lvl]-offset)) * MAX_FILL, MAX_FILL)
-        
-
-        # Create the filled progress bar
-        bar_fill = progress_bar.inflate(-10,-6)
-        bar_fill.width = current_width
-        
-        # progress_bar_fill = pygame.Rect(progress_bar.left + 10, progress_bar.top + 6, current_width, 28)
-        pygame.draw.rect(self.screen, 'darkgreen', bar_fill)
-
         #draw arrow
         if self.mothership and not self.mothership.dead:
             dir = self.mothership.pos - self.player.pos
@@ -177,15 +160,6 @@ class GameManager:
                 elif pos.y >= self.screen.get_height():
                     pos.y = self.screen.get_height()
                 self.screen.blit(arrow,(pos.x-arrow.get_width()//2,pos.y-arrow.get_height()//2))
-        
-        hp_surf = main_font.render('HP: ' + str(self.player.hp), False, 'White')
-        hp_rect = hp_surf.get_rect(topleft = (15, 15))
-        self.screen.blit(hp_surf, hp_rect)
-
-        level_surf = main_font.render('LEVEL: ' + str(self.player_lvl), False, 'White')
-        level_rect = level_surf.get_rect(topleft = (self.screen.width - 135, 15))
-        self.screen.blit(level_surf, level_rect)
-
         if self.just_spawned:
             spawned_surf = main_font.render('The Mothership has arrived!', False, 'White')
             spawned_rect = spawned_surf.get_rect(center = (self.screen.width // 2, self.screen.height - 120))
@@ -193,10 +167,48 @@ class GameManager:
             
             def spawn_text_timer():
                 starttime = time.perf_counter()
-
                 while time.perf_counter() < starttime + 5:
                     self.screen.blit(spawned_surf, spawned_rect)
                     yield
 
             self.game.asyncCtx.addCoroutine(spawn_text_timer())
             self.just_spawned = False
+
+        #draw lvl
+        lvl_bar = pygame.Rect(5, 30, 200, 20)
+        lvl_bar_fill = lvl_bar.inflate( -6,-6)
+        offset = self.kill_count_intervals[self.player_lvl-1]
+        lvl_bar_fill.w = min(((self.game.kill_count-offset) / (self.kill_count_intervals[self.player_lvl]-offset)) * lvl_bar_fill.w, lvl_bar_fill.w)
+
+        pygame.draw.rect(self.screen, 'gray', lvl_bar)
+        pygame.draw.rect(self.screen, 'darkgreen', lvl_bar_fill)
+
+        #draw hp
+        hp_bar = pygame.Rect(5, 5, 200, 20)
+        hp_bar_filled = hp_bar.inflate(-6,-6)
+        hp_bar_filled.w = min((self.player.hp / self.player.hp_max) * hp_bar_filled.w, hp_bar_filled.w)
+
+        pygame.draw.rect(self.screen, 'gray', hp_bar)
+        pygame.draw.rect(self.screen, 'darkred', hp_bar_filled)
+        hp_surf = main_font.render(str(self.player.hp), False, 'White')
+        self.screen.blit(hp_surf,hp_bar_filled)
+
+
+        level_surf = main_font.render('LEVEL: ' + str(self.player_lvl), False, 'White')
+        level_rect = level_surf.get_rect(topright = (self.screen.width-5 , 5))
+        self.screen.blit(level_surf, level_rect)
+
+        x,y = 30,self.screen.height - 100
+        p_ctrlr = self.player.controller
+        assert type(p_ctrlr) is PlayerController
+        for action in [p_ctrlr.a_shoot,p_ctrlr.a_charge]:
+
+            size = action.img.get_size()
+            self.screen.fill((50,50,50),(x,y,*size))
+            self.screen.blit(action.img,(x,y))    
+            if not action.isAvailable(self.game.time):
+                percent_left = action.percentLeft(self.game.time)
+                b = y + size[1]
+                t = int(b - percent_left * size[1] )
+                self.screen.fill((127,127,172),(x,t,size[0],b-t),pygame.BLEND_MULT)
+            x += action.img.get_width()+5
